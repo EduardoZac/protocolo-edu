@@ -1,0 +1,96 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase'
+import { RAINBOW_COLORS } from '@/lib/types'
+
+export default function RainbowTracker({ userId, date }: { userId: string; date: string }) {
+  const [activeColors, setActiveColors] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  const loadLog = useCallback(async () => {
+    const { data } = await supabase
+      .from('daily_logs')
+      .select('colors')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .maybeSingle()
+
+    setActiveColors(data?.colors ?? [])
+    setLoading(false)
+  }, [supabase, userId, date])
+
+  useEffect(() => { loadLog() }, [loadLog])
+
+  async function toggleColor(colorId: string) {
+    const next = activeColors.includes(colorId)
+      ? activeColors.filter(c => c !== colorId)
+      : [...activeColors, colorId]
+
+    setActiveColors(next)
+
+    await supabase
+      .from('daily_logs')
+      .upsert({ user_id: userId, date, colors: next, updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' })
+  }
+
+  const count = activeColors.length
+
+  return (
+    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs text-neutral-500 uppercase tracking-widest">Arcoíris</p>
+        <span className={`text-sm font-mono font-semibold ${count >= 5 ? 'text-green-400' : count >= 3 ? 'text-amber-400' : 'text-neutral-500'}`}>
+          {count}/7
+        </span>
+      </div>
+
+      {/* Color dots */}
+      <div className="grid grid-cols-7 gap-2 mb-4">
+        {RAINBOW_COLORS.map(color => {
+          const active = activeColors.includes(color.id)
+          return (
+            <button
+              key={color.id}
+              onClick={() => toggleColor(color.id)}
+              disabled={loading}
+              title={color.tip}
+              className="flex flex-col items-center gap-1.5 group"
+            >
+              <div
+                className="w-8 h-8 rounded-full transition-all duration-150 group-hover:scale-110 group-active:scale-95"
+                style={{
+                  backgroundColor: color.hex,
+                  opacity: active ? 1 : 0.18,
+                  boxShadow: active ? `0 0 10px ${color.hex}55` : 'none',
+                }}
+              />
+              <span className={`text-[9px] leading-none ${active ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                {color.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${(count / 7) * 100}%`,
+            background: count >= 5 ? '#22c55e' : count >= 3 ? '#f59e0b' : '#525252',
+          }}
+        />
+      </div>
+
+      <p className="text-neutral-600 text-xs mt-3 text-center">
+        {count === 0 && 'Toca los colores que ya comiste'}
+        {count > 0 && count < 5 && `${5 - count} colores más para meta`}
+        {count >= 5 && count < 7 && 'Muy bien — sigue sumando'}
+        {count === 7 && '✓ Arcoíris completo hoy'}
+      </p>
+    </div>
+  )
+}
