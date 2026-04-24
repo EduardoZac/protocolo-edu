@@ -38,9 +38,9 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
   const count = activeColors.length
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+    <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-neutral-500 uppercase tracking-widest">Arcoíris</p>
+        <p className="text-xs text-neutral-400 uppercase tracking-widest">Arcoíris</p>
         <span className={`text-sm font-mono font-semibold ${count >= 5 ? 'text-green-400' : count >= 3 ? 'text-amber-400' : 'text-neutral-500'}`}>
           {count}/7
         </span>
@@ -62,11 +62,11 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
                 className="w-8 h-8 rounded-full transition-all duration-150 group-hover:scale-110 group-active:scale-95"
                 style={{
                   backgroundColor: color.hex,
-                  opacity: active ? 1 : 0.18,
+                  opacity: active ? 1 : 0.28,
                   boxShadow: active ? `0 0 10px ${color.hex}55` : 'none',
                 }}
               />
-              <span className={`text-[9px] leading-none ${active ? 'text-neutral-300' : 'text-neutral-600'}`}>
+              <span className={`text-[9px] leading-none ${active ? 'text-neutral-100' : 'text-neutral-500'}`}>
                 {color.label}
               </span>
             </button>
@@ -75,7 +75,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+      <div className="h-1 bg-neutral-700 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{
@@ -85,7 +85,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         />
       </div>
 
-      <p className="text-neutral-600 text-xs mt-3 text-center">
+      <p className="text-neutral-500 text-xs mt-3 text-center">
         {count === 0 && 'Toca los colores que ya comiste'}
         {count > 0 && count < 5 && `${5 - count} colores más para meta`}
         {count >= 5 && count < 7 && 'Muy bien — sigue sumando'}

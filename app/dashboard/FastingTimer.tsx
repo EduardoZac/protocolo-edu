@@ -86,14 +86,14 @@ export default function FastingTimer({ userId }: { userId: string }) {
     : null
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
-      <p className="text-xs text-neutral-500 uppercase tracking-widest mb-4">Ayuno</p>
+    <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5">
+      <p className="text-xs text-neutral-400 uppercase tracking-widest mb-4">Ayuno</p>
 
       <div className="flex items-center gap-5">
         {/* SVG Ring */}
         <div className="flex-shrink-0">
           <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso de ayuno: ${Math.round(progress * 100)}% de 14 horas`}>
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#262626" strokeWidth="6" />
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#404040" strokeWidth="6" />
             {activeFast && (
               <circle
                 cx="60" cy="60" r="52"
@@ -107,13 +107,13 @@ export default function FastingTimer({ userId }: { userId: string }) {
                 style={{ transition: 'stroke-dashoffset 0.8s linear' }}
               />
             )}
-            <text x="60" y="55" textAnchor="middle" fontSize="11" fill="#737373" fontFamily="var(--font-mono, monospace)">
+            <text x="60" y="55" textAnchor="middle" fontSize="11" fill="#a3a3a3" fontFamily="var(--font-mono, monospace)">
               {activeFast ? formatElapsed(elapsed) : '0:00:00'}
             </text>
-            <text x="60" y="70" textAnchor="middle" fontSize="18" fontWeight="600" fill={activeFast ? strokeColor : '#525252'}>
+            <text x="60" y="70" textAnchor="middle" fontSize="18" fontWeight="600" fill={activeFast ? strokeColor : '#737373'}>
               {Math.round(progress * 100)}%
             </text>
-            <text x="60" y="84" textAnchor="middle" fontSize="10" fill="#525252">
+            <text x="60" y="84" textAnchor="middle" fontSize="10" fill="#737373">
               de {GOAL_HOURS}h
             </text>
           </svg>
@@ -124,11 +124,11 @@ export default function FastingTimer({ userId }: { userId: string }) {
           {activeFast ? (
             <>
               <div className="mb-3">
-                <p className="text-xs text-neutral-500 mb-1">Inicio</p>
-                <p className="font-mono text-sm text-neutral-200">{startTime}</p>
+                <p className="text-xs text-neutral-400 mb-1">Inicio</p>
+                <p className="font-mono text-sm text-neutral-100">{startTime}</p>
               </div>
               <div className="mb-4">
-                <p className="text-xs text-neutral-500 mb-1">Horas</p>
+                <p className="text-xs text-neutral-400 mb-1">Horas</p>
                 <p className={`font-semibold text-lg ${goalReached ? 'text-green-400' : 'text-amber-400'}`}>
                   {hours.toFixed(1)}h {goalReached && '✓'}
                 </p>
@@ -139,8 +139,8 @@ export default function FastingTimer({ userId }: { userId: string }) {
             </>
           ) : (
             <div className="mb-4">
-              <p className="text-neutral-500 text-sm">Sin ayuno activo</p>
-              <p className="text-neutral-600 text-xs mt-1">Meta: {GOAL_HOURS}h diarias</p>
+              <p className="text-neutral-300 text-sm">Sin ayuno activo</p>
+              <p className="text-neutral-500 text-xs mt-1">Meta: {GOAL_HOURS}h diarias</p>
             </div>
           )}
 
@@ -149,7 +149,7 @@ export default function FastingTimer({ userId }: { userId: string }) {
             disabled={loading || saving}
             className={`w-full py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${
               activeFast
-                ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700'
+                ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-100 border border-neutral-600'
                 : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'
             }`}
           >

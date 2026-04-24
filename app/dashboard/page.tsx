@@ -52,17 +52,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col max-w-2xl mx-auto">
+    <div className="min-h-screen bg-neutral-900 flex flex-col max-w-2xl mx-auto">
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 pt-5 pb-3">
         <div>
           <h1 className="font-semibold text-neutral-100 text-base">Protocolo</h1>
-          <p className="text-neutral-500 text-xs capitalize">{formatHeaderDate()}</p>
+          <p className="text-neutral-400 text-xs capitalize">{formatHeaderDate()}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="text-neutral-600 hover:text-neutral-400 text-xs transition-colors px-2 py-1"
+          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-2 py-1"
         >
           Salir
         </button>
@@ -77,7 +77,7 @@ export default function DashboardPage() {
             className={`flex-1 py-2 rounded-xl text-xs font-medium capitalize transition-all ${
               tab === t
                 ? 'bg-neutral-800 text-neutral-100'
-                : 'text-neutral-600 hover:text-neutral-400'
+                : 'text-neutral-500 hover:text-neutral-300'
             }`}
           >
             {t}

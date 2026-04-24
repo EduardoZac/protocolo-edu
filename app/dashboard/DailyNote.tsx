@@ -54,15 +54,15 @@ export default function DailyNote({ userId, date }: { userId: string; date: stri
   }
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+    <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-neutral-500 uppercase tracking-widest">Nota del día</p>
+        <p className="text-xs text-neutral-400 uppercase tracking-widest">Nota del día</p>
         {!loading && saved && <span className="text-xs text-green-500">Guardado</span>}
       </div>
 
       {/* Energy 1-5 */}
       <div className="mb-4">
-        <p className="text-xs text-neutral-600 mb-2">Energía subjetiva</p>
+        <p className="text-xs text-neutral-400 mb-2">Energía subjetiva</p>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map(val => (
             <button
@@ -70,9 +70,9 @@ export default function DailyNote({ userId, date }: { userId: string; date: stri
               onClick={() => handleEnergyClick(val)}
               className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all"
               style={{
-                backgroundColor: energy === val ? energyColors[val] : '#262626',
-                color: energy === val ? '#0a0a0a' : '#525252',
-                border: energy === val ? 'none' : '1px solid #404040',
+                backgroundColor: energy === val ? energyColors[val] : '#3a3a3a',
+                color: energy === val ? '#0a0a0a' : '#a3a3a3',
+                border: energy === val ? 'none' : '1px solid #525252',
               }}
             >
               {val}
@@ -87,7 +87,7 @@ export default function DailyNote({ userId, date }: { userId: string; date: stri
         onChange={e => handleNoteChange(e.target.value)}
         placeholder="Cómo estuvo el día, cómo te sentiste en el ayuno, qué comiste, lo que sea..."
         rows={4}
-        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-3 text-sm text-neutral-200 placeholder-neutral-700 resize-none focus:outline-none focus:border-neutral-600 transition-colors leading-relaxed"
+        className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-3 py-3 text-sm text-neutral-100 placeholder-neutral-600 resize-none focus:outline-none focus:border-neutral-500 transition-colors leading-relaxed"
       />
     </div>
   )

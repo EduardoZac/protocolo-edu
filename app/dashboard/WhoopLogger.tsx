@@ -71,9 +71,9 @@ export default function WhoopLogger({ userId, date }: { userId: string; date: st
   }
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+    <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-neutral-500 uppercase tracking-widest">WHOOP</p>
+        <p className="text-xs text-neutral-400 uppercase tracking-widest">WHOOP</p>
         {!loading && saved && <span className="text-xs text-green-500">Guardado</span>}
       </div>
 
@@ -82,8 +82,8 @@ export default function WhoopLogger({ userId, date }: { userId: string; date: st
           const numVal = data[field.key] ? parseFloat(data[field.key]) : null
           const colorClass = field.colorFn(numVal)
           return (
-            <div key={field.key} className="bg-neutral-950 rounded-xl p-3">
-              <p className="text-xs text-neutral-500 mb-1">{field.label}</p>
+            <div key={field.key} className="bg-neutral-900 rounded-xl p-3">
+              <p className="text-xs text-neutral-400 mb-1">{field.label}</p>
               <div className="flex items-baseline gap-1">
                 <input
                   type="number"
@@ -93,16 +93,16 @@ export default function WhoopLogger({ userId, date }: { userId: string; date: st
                   value={data[field.key]}
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder="—"
-                  className={`w-full bg-transparent font-mono text-xl font-semibold focus:outline-none placeholder-neutral-700 ${data[field.key] ? colorClass : 'text-neutral-500'}`}
+                  className={`w-full bg-transparent font-mono text-xl font-semibold focus:outline-none placeholder-neutral-600 ${data[field.key] ? colorClass : 'text-neutral-400'}`}
                 />
-                {field.unit && <span className="text-neutral-600 text-xs">{field.unit}</span>}
+                {field.unit && <span className="text-neutral-500 text-xs">{field.unit}</span>}
               </div>
             </div>
           )
         })}
       </div>
 
-      <p className="text-neutral-700 text-xs mt-3 text-center">Guarda solo al escribir el número</p>
+      <p className="text-neutral-500 text-xs mt-3 text-center">Guarda solo al escribir el número</p>
     </div>
   )
 }
