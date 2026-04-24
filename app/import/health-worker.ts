@@ -1,9 +1,9 @@
-const WANTED = new Set([
+const WANTED_TYPES = [
   'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
   'HKQuantityTypeIdentifierRestingHeartRate',
   'HKQuantityTypeIdentifierStepCount',
   'HKCategoryTypeIdentifierSleepAnalysis',
-])
+]
 
 const SLEEP_ASLEEP = new Set([
   'HKCategoryValueSleepAnalysisAsleep',
@@ -20,49 +20,52 @@ function attr(tag: string, name: string): string {
   return end === -1 ? '' : tag.slice(start, end)
 }
 
-function parse(text: string) {
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 90)
-  const cutoffStr = cutoff.toISOString().slice(0, 10)
+type Acc = Record<string, { hrv: number[]; resting_hr: number[]; steps: number; sleepMs: number }>
 
-  const acc: Record<string, {
-    hrv: number[]
-    resting_hr: number[]
-    steps: number
-    sleepMs: number
-  }> = {}
+function processChunk(text: string, cutoffStr: string, acc: Acc) {
+  let i = 0
+  while (true) {
+    const start = text.indexOf('<Record ', i)
+    if (start === -1) break
+    const end = text.indexOf('/>', start)
+    if (end === -1) break
+    const tag = text.slice(start, end + 2)
+    i = end + 2
 
-  function slot(date: string) {
-    if (!acc[date]) acc[date] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
-    return acc[date]
-  }
+    // Fast pre-filter — skip if none of our keywords present
+    let matched = false
+    for (const t of WANTED_TYPES) {
+      if (tag.indexOf(t) !== -1) { matched = true; break }
+    }
+    if (!matched) continue
 
-  const re = /<Record\b[^>]+\/>/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(text)) !== null) {
-    const tag  = m[0]
     const type = attr(tag, 'type')
-    if (!WANTED.has(type)) continue
-
     const startDate = attr(tag, 'startDate')
     const date = startDate.slice(0, 10)
     if (date < cutoffStr) continue
 
+    if (!acc[date]) acc[date] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
+    const d = acc[date]
+
     if (type === 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN') {
-      slot(date).hrv.push(parseFloat(attr(tag, 'value')))
+      d.hrv.push(parseFloat(attr(tag, 'value')))
     } else if (type === 'HKQuantityTypeIdentifierRestingHeartRate') {
-      slot(date).resting_hr.push(parseFloat(attr(tag, 'value')))
+      d.resting_hr.push(parseFloat(attr(tag, 'value')))
     } else if (type === 'HKQuantityTypeIdentifierStepCount') {
-      slot(date).steps += parseFloat(attr(tag, 'value'))
+      d.steps += parseFloat(attr(tag, 'value'))
     } else if (type === 'HKCategoryTypeIdentifierSleepAnalysis') {
       if (SLEEP_ASLEEP.has(attr(tag, 'value'))) {
         const endDate = attr(tag, 'endDate')
         const ms = new Date(endDate).getTime() - new Date(startDate).getTime()
-        slot(endDate.slice(0, 10)).sleepMs += ms
+        const wakeDate = endDate.slice(0, 10)
+        if (!acc[wakeDate]) acc[wakeDate] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
+        acc[wakeDate].sleepMs += ms
       }
     }
   }
+}
 
+function buildResult(acc: Acc) {
   return Object.entries(acc)
     .map(([date, d]) => ({
       date,
@@ -76,10 +79,50 @@ function parse(text: string) {
     .sort((a, b) => b.date.localeCompare(a.date))
 }
 
-self.addEventListener('message', (e: MessageEvent) => {
+self.addEventListener('message', async (e: MessageEvent) => {
+  const file: File = e.data.file
+
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 90)
+  const cutoffStr = cutoff.toISOString().slice(0, 10)
+
+  const CHUNK = 10 * 1024 * 1024           // 10 MB at a time
+  const READ_FROM = Math.max(0, file.size - 200 * 1024 * 1024) // last 200 MB
+  const total = file.size - READ_FROM
+
+  const acc: Acc = {}
+  let remainder = ''
+  let offset = READ_FROM
+
   try {
-    self.postMessage({ ok: true, data: parse(e.data.text) })
+    while (offset < file.size) {
+      const end = Math.min(offset + CHUNK, file.size)
+      const text = await file.slice(offset, end).text()
+      const combined = remainder + text
+
+      // Keep incomplete record at boundary for next chunk
+      const lastOpen = combined.lastIndexOf('<Record ')
+      const lastClose = combined.lastIndexOf('/>')
+      let toProcess: string
+      if (lastOpen > lastClose) {
+        toProcess = combined.slice(0, lastOpen)
+        remainder = combined.slice(lastOpen)
+      } else {
+        toProcess = combined
+        remainder = ''
+      }
+
+      processChunk(toProcess, cutoffStr, acc)
+      offset = end
+
+      const pct = Math.round(((offset - READ_FROM) / total) * 100)
+      self.postMessage({ type: 'progress', pct })
+    }
+
+    if (remainder) processChunk(remainder, cutoffStr, acc)
+
+    self.postMessage({ type: 'done', data: buildResult(acc) })
   } catch (err) {
-    self.postMessage({ ok: false, error: String(err) })
+    self.postMessage({ type: 'error', error: String(err) })
   }
 })

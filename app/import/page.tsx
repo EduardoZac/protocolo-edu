@@ -20,47 +20,44 @@ export default function ImportPage() {
   const [stage, setStage] = useState<Stage>('idle')
   const [days, setDays] = useState<DayData[]>([])
   const [uploaded, setUploaded] = useState(0)
+  const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const router = useRouter()
 
   const processFile = useCallback((file: File) => {
     setStage('parsing')
+    setProgress(0)
     setError(null)
 
-    const CHUNK = 150 * 1024 * 1024
-    const slice = file.slice(Math.max(0, file.size - CHUNK), file.size)
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const text = e.target?.result as string
-
-      // Run parsing in a Web Worker so the UI doesn't freeze
-      const worker = new Worker(new URL('./health-worker.ts', import.meta.url))
-      worker.onmessage = (ev) => {
-        worker.terminate()
-        if (!ev.data.ok) {
-          setError('Error al procesar el archivo.')
-          setStage('idle')
-          return
-        }
-        const parsed = ev.data.data
-        if (parsed.length === 0) {
-          setError('No se encontraron datos. Usa exportar.xml (no export_cda.xml).')
-          setStage('idle')
-          return
-        }
-        setDays(parsed)
-        setStage('preview')
+    // Pass File directly to Worker — no main-thread I/O blocking
+    const worker = new Worker(new URL('./health-worker.ts', import.meta.url))
+    worker.onmessage = (ev) => {
+      if (ev.data.type === 'progress') {
+        setProgress(ev.data.pct)
+        return
       }
-      worker.onerror = () => {
-        worker.terminate()
+      worker.terminate()
+      if (ev.data.type === 'error') {
         setError('Error al procesar el archivo.')
         setStage('idle')
+        return
       }
-      worker.postMessage({ text })
+      const parsed = ev.data.data
+      if (parsed.length === 0) {
+        setError('No se encontraron datos. Usa exportar.xml (no export_cda.xml).')
+        setStage('idle')
+        return
+      }
+      setDays(parsed)
+      setStage('preview')
     }
-    reader.readAsText(slice)
+    worker.onerror = () => {
+      worker.terminate()
+      setError('Error al procesar el archivo.')
+      setStage('idle')
+    }
+    worker.postMessage({ file })
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -152,7 +149,14 @@ export default function ImportPage() {
       {stage === 'parsing' && (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 mt-20">
           <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-neutral-400 text-sm">Procesando export.xml...</p>
+          <p className="text-neutral-400 text-sm">Procesando últimos 90 días...</p>
+          <div className="w-48 h-1.5 bg-neutral-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-neutral-600 text-xs">{progress}%</p>
         </div>
       )}
 
