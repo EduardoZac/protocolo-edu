@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import FastingTimer from './FastingTimer'
 import RainbowTracker from './RainbowTracker'
@@ -66,6 +67,12 @@ export default function DashboardPage() {
         >
           Salir
         </button>
+        <Link
+          href="/import"
+          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-2 py-1"
+        >
+          Importar
+        </Link>
       </header>
 
       {/* Tab bar */}
