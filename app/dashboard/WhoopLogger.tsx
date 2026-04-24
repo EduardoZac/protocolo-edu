@@ -82,20 +82,21 @@ export default function WhoopLogger({ userId, date }: { userId: string; date: st
           const numVal = data[field.key] ? parseFloat(data[field.key]) : null
           const colorClass = field.colorFn(numVal)
           return (
-            <div key={field.key} className="bg-neutral-900 rounded-xl p-3">
-              <p className="text-xs text-neutral-400 mb-1">{field.label}</p>
+            <div key={field.key} className="bg-neutral-900 rounded-xl p-4 min-h-[80px] flex flex-col justify-between">
+              <p className="text-xs text-neutral-400 mb-2">{field.label}</p>
               <div className="flex items-baseline gap-1">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min={field.min}
                   max={field.max}
                   step={field.step}
                   value={data[field.key]}
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder="—"
-                  className={`w-full bg-transparent font-mono text-xl font-semibold focus:outline-none placeholder-neutral-600 ${data[field.key] ? colorClass : 'text-neutral-400'}`}
+                  className={`w-full bg-transparent font-mono text-2xl font-semibold focus:outline-none placeholder-neutral-600 ${data[field.key] ? colorClass : 'text-neutral-400'}`}
                 />
-                {field.unit && <span className="text-neutral-500 text-xs">{field.unit}</span>}
+                {field.unit && <span className="text-neutral-500 text-sm">{field.unit}</span>}
               </div>
             </div>
           )

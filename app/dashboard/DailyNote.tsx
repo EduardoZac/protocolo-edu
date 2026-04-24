@@ -68,7 +68,7 @@ export default function DailyNote({ userId, date }: { userId: string; date: stri
             <button
               key={val}
               onClick={() => handleEnergyClick(val)}
-              className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all"
+              className="flex-1 h-11 rounded-xl text-sm font-semibold transition-all"
               style={{
                 backgroundColor: energy === val ? energyColors[val] : '#3a3a3a',
                 color: energy === val ? '#0a0a0a' : '#a3a3a3',

@@ -56,32 +56,32 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-neutral-900 flex flex-col max-w-2xl mx-auto">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 pt-5 pb-3">
+      <header className="flex items-center justify-between px-4 pt-6 pb-3">
         <div>
           <h1 className="font-semibold text-neutral-100 text-base">Protocolo</h1>
           <p className="text-neutral-400 text-xs capitalize">{formatHeaderDate()}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-2 py-1"
+          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-3 py-2 min-h-[44px] flex items-center"
         >
           Salir
         </button>
         <Link
           href="/import"
-          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-2 py-1"
+          className="text-neutral-500 hover:text-neutral-300 text-xs transition-colors px-3 py-2 min-h-[44px] flex items-center"
         >
           Importar
         </Link>
       </header>
 
       {/* Tab bar */}
-      <div className="flex px-4 gap-1 mb-1">
+      <div className="flex px-4 gap-1 mb-2">
         {(['hoy', 'historia'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-xl text-xs font-medium capitalize transition-all ${
+            className={`flex-1 py-3 rounded-xl text-sm font-medium capitalize transition-all ${
               tab === t
                 ? 'bg-neutral-800 text-neutral-100'
                 : 'text-neutral-500 hover:text-neutral-300'
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       {/* Content */}
       <main className="flex-1 overflow-y-auto">
         {tab === 'hoy' ? (
-          <div className="p-4 space-y-3 pb-10">
+          <div className="p-4 space-y-4 pb-16">
             {/* Row 1: Fasting + Rainbow */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FastingTimer userId={userId} />

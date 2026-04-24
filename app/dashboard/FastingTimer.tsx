@@ -147,7 +147,7 @@ export default function FastingTimer({ userId }: { userId: string }) {
           <button
             onClick={activeFast ? stopFast : startFast}
             disabled={loading || saving}
-            className={`w-full py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${
+            className={`w-full py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${
               activeFast
                 ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-100 border border-neutral-600'
                 : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'

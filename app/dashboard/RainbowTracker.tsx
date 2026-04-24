@@ -47,7 +47,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
       </div>
 
       {/* Color dots */}
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 mb-4">
         {RAINBOW_COLORS.map(color => {
           const active = activeColors.includes(color.id)
           return (
@@ -56,17 +56,17 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
               onClick={() => toggleColor(color.id)}
               disabled={loading}
               title={color.tip}
-              className="flex flex-col items-center gap-1.5 group"
+              className="flex flex-col items-center gap-1.5 group min-h-[52px] justify-center"
             >
               <div
-                className="w-8 h-8 rounded-full transition-all duration-150 group-hover:scale-110 group-active:scale-95"
+                className="w-10 h-10 rounded-full transition-all duration-150 group-hover:scale-110 group-active:scale-95"
                 style={{
                   backgroundColor: color.hex,
                   opacity: active ? 1 : 0.28,
                   boxShadow: active ? `0 0 10px ${color.hex}55` : 'none',
                 }}
               />
-              <span className={`text-[9px] leading-none ${active ? 'text-neutral-100' : 'text-neutral-500'}`}>
+              <span className={`text-[10px] leading-none ${active ? 'text-neutral-100' : 'text-neutral-500'}`}>
                 {color.label}
               </span>
             </button>
