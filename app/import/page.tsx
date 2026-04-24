@@ -13,97 +13,6 @@ interface DayData {
   sleep_performance: number | null
 }
 
-const WANTED = new Set([
-  'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
-  'HKQuantityTypeIdentifierRestingHeartRate',
-  'HKQuantityTypeIdentifierStepCount',
-  'HKCategoryTypeIdentifierSleepAnalysis',
-])
-
-const SLEEP_ASLEEP = new Set([
-  'HKCategoryValueSleepAnalysisAsleep',
-  'HKCategoryValueSleepAnalysisAsleepCore',
-  'HKCategoryValueSleepAnalysisAsleepDeep',
-  'HKCategoryValueSleepAnalysisAsleepREM',
-])
-
-function attr(tag: string, name: string): string {
-  const i = tag.indexOf(name + '="')
-  if (i === -1) return ''
-  const start = i + name.length + 2
-  const end = tag.indexOf('"', start)
-  return end === -1 ? '' : tag.slice(start, end)
-}
-
-function parseHealthXML(xmlText: string): DayData[] {
-  // Only last 90 days
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - 90)
-  const cutoffStr = cutoff.toISOString().slice(0, 10)
-
-  const acc: Record<string, {
-    hrv: number[]
-    resting_hr: number[]
-    steps: number
-    sleepMs: number
-  }> = {}
-
-  function slot(date: string) {
-    if (!acc[date]) acc[date] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
-    return acc[date]
-  }
-
-  // Regex-based parse — no DOM tree, ~5x faster than DOMParser
-  const re = /<Record\b[^>]+\/>/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(xmlText)) !== null) {
-    const tag  = m[0]
-    const type = attr(tag, 'type')
-    if (!WANTED.has(type)) continue
-
-    const startDate = attr(tag, 'startDate')
-    const date = startDate.slice(0, 10)
-    if (date < cutoffStr) continue
-
-    if (type === 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN') {
-      slot(date).hrv.push(parseFloat(attr(tag, 'value')))
-
-    } else if (type === 'HKQuantityTypeIdentifierRestingHeartRate') {
-      slot(date).resting_hr.push(parseFloat(attr(tag, 'value')))
-
-    } else if (type === 'HKQuantityTypeIdentifierStepCount') {
-      slot(date).steps += parseFloat(attr(tag, 'value'))
-
-    } else if (type === 'HKCategoryTypeIdentifierSleepAnalysis') {
-      const val = attr(tag, 'value')
-      if (SLEEP_ASLEEP.has(val)) {
-        const endDate = attr(tag, 'endDate')
-        const ms = new Date(endDate).getTime() - new Date(startDate).getTime()
-        slot(endDate.slice(0, 10)).sleepMs += ms
-      }
-    }
-  }
-
-  return Object.entries(acc)
-    .map(([date, d]) => {
-      const hrv = d.hrv.length > 0
-        ? Math.round(d.hrv.reduce((a, b) => a + b, 0) / d.hrv.length)
-        : null
-      const resting_hr = d.resting_hr.length > 0
-        ? Math.round(d.resting_hr[d.resting_hr.length - 1])
-        : null
-      const steps = d.steps > 0 ? Math.round(d.steps) : null
-      const sleep_hours = d.sleepMs > 0
-        ? Math.round(d.sleepMs / 360000) / 10
-        : null
-      const sleep_performance = sleep_hours
-        ? Math.min(Math.round((sleep_hours / 8) * 100), 100)
-        : null
-      return { date, hrv, resting_hr, steps, sleep_hours, sleep_performance }
-    })
-    .filter(d => d.hrv || d.resting_hr || d.steps || d.sleep_hours)
-    .sort((a, b) => b.date.localeCompare(a.date))
-}
 
 type Stage = 'idle' | 'parsing' | 'preview' | 'uploading' | 'done'
 
@@ -118,27 +27,39 @@ export default function ImportPage() {
   const processFile = useCallback((file: File) => {
     setStage('parsing')
     setError(null)
+
+    const CHUNK = 150 * 1024 * 1024
+    const slice = file.slice(Math.max(0, file.size - CHUNK), file.size)
+
     const reader = new FileReader()
     reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string
-        const parsed = parseHealthXML(text)
+      const text = e.target?.result as string
+
+      // Run parsing in a Web Worker so the UI doesn't freeze
+      const worker = new Worker(new URL('./health-worker.ts', import.meta.url))
+      worker.onmessage = (ev) => {
+        worker.terminate()
+        if (!ev.data.ok) {
+          setError('Error al procesar el archivo.')
+          setStage('idle')
+          return
+        }
+        const parsed = ev.data.data
         if (parsed.length === 0) {
-          setError('No se encontraron datos. Usa el archivo exportar.xml (no export_cda.xml).')
+          setError('No se encontraron datos. Usa exportar.xml (no export_cda.xml).')
           setStage('idle')
           return
         }
         setDays(parsed)
         setStage('preview')
-      } catch (err) {
-        setError('Error al parsear el XML. Asegúrate de exportar desde Apple Health.')
+      }
+      worker.onerror = () => {
+        worker.terminate()
+        setError('Error al procesar el archivo.')
         setStage('idle')
       }
+      worker.postMessage({ text })
     }
-    // Read only the last 150 MB — Health exports are chronological,
-    // so the last 90 days are always near the end of the file.
-    const CHUNK = 150 * 1024 * 1024
-    const slice = file.slice(Math.max(0, file.size - CHUNK), file.size)
     reader.readAsText(slice)
   }, [])
 
