@@ -124,7 +124,7 @@ export default function ImportPage() {
         const text = e.target?.result as string
         const parsed = parseHealthXML(text)
         if (parsed.length === 0) {
-          setError('No se encontraron datos de salud en el archivo.')
+          setError('No se encontraron datos. Usa el archivo exportar.xml (no export_cda.xml).')
           setStage('idle')
           return
         }
@@ -135,7 +135,11 @@ export default function ImportPage() {
         setStage('idle')
       }
     }
-    reader.readAsText(file)
+    // Read only the last 150 MB — Health exports are chronological,
+    // so the last 90 days are always near the end of the file.
+    const CHUNK = 150 * 1024 * 1024
+    const slice = file.slice(Math.max(0, file.size - CHUNK), file.size)
+    reader.readAsText(slice)
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
