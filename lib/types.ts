@@ -18,6 +18,9 @@ export interface DailyLog {
   recovery_score: number | null     // 0-100
   sleep_performance: number | null  // 0-100
   strain: number | null             // 0-21 WHOOP scale
+  // Apple Health (auto-sync via Shortcut)
+  resting_hr: number | null
+  steps: number | null
   // Subjective
   energy: number | null             // 1-10
   notes: string | null
