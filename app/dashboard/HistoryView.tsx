@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { recoveryColor, hrvColor } from '@/lib/types'
 import type { Fast, DailyLog } from '@/lib/types'
+import Charts from './Charts'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
@@ -79,6 +80,9 @@ export default function HistoryView({ userId }: { userId: string }) {
           </div>
         ))}
       </div>
+
+      {/* Charts */}
+      <Charts logs={logs} fasts={fasts} />
 
       {/* Fasting bars */}
       <div>
