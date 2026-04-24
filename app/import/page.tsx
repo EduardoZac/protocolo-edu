@@ -13,9 +13,33 @@ interface DayData {
   sleep_performance: number | null
 }
 
+const WANTED = new Set([
+  'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
+  'HKQuantityTypeIdentifierRestingHeartRate',
+  'HKQuantityTypeIdentifierStepCount',
+  'HKCategoryTypeIdentifierSleepAnalysis',
+])
+
+const SLEEP_ASLEEP = new Set([
+  'HKCategoryValueSleepAnalysisAsleep',
+  'HKCategoryValueSleepAnalysisAsleepCore',
+  'HKCategoryValueSleepAnalysisAsleepDeep',
+  'HKCategoryValueSleepAnalysisAsleepREM',
+])
+
+function attr(tag: string, name: string): string {
+  const i = tag.indexOf(name + '="')
+  if (i === -1) return ''
+  const start = i + name.length + 2
+  const end = tag.indexOf('"', start)
+  return end === -1 ? '' : tag.slice(start, end)
+}
+
 function parseHealthXML(xmlText: string): DayData[] {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xmlText, 'text/xml')
+  // Only last 90 days
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 90)
+  const cutoffStr = cutoff.toISOString().slice(0, 10)
 
   const acc: Record<string, {
     hrv: number[]
@@ -29,32 +53,36 @@ function parseHealthXML(xmlText: string): DayData[] {
     return acc[date]
   }
 
-  doc.querySelectorAll('Record').forEach(r => {
-    const type  = r.getAttribute('type') ?? ''
-    const val   = parseFloat(r.getAttribute('value') ?? '0')
-    const start = r.getAttribute('startDate') ?? ''
-    const end   = r.getAttribute('endDate') ?? ''
-    const date  = start.slice(0, 10)
+  // Regex-based parse — no DOM tree, ~5x faster than DOMParser
+  const re = /<Record\b[^>]+\/>/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(xmlText)) !== null) {
+    const tag  = m[0]
+    const type = attr(tag, 'type')
+    if (!WANTED.has(type)) continue
+
+    const startDate = attr(tag, 'startDate')
+    const date = startDate.slice(0, 10)
+    if (date < cutoffStr) continue
 
     if (type === 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN') {
-      slot(date).hrv.push(val)
+      slot(date).hrv.push(parseFloat(attr(tag, 'value')))
 
     } else if (type === 'HKQuantityTypeIdentifierRestingHeartRate') {
-      slot(date).resting_hr.push(val)
+      slot(date).resting_hr.push(parseFloat(attr(tag, 'value')))
 
     } else if (type === 'HKQuantityTypeIdentifierStepCount') {
-      slot(date).steps += val
+      slot(date).steps += parseFloat(attr(tag, 'value'))
 
     } else if (type === 'HKCategoryTypeIdentifierSleepAnalysis') {
-      // 1=asleep(legacy) 3=core 4=deep 5=rem (iOS 16+)
-      const catVal = parseInt(r.getAttribute('value') ?? '0')
-      if ([1, 3, 4, 5].includes(catVal)) {
-        const ms = new Date(end).getTime() - new Date(start).getTime()
-        // attribute to wake-up date
-        slot(end.slice(0, 10)).sleepMs += ms
+      const val = attr(tag, 'value')
+      if (SLEEP_ASLEEP.has(val)) {
+        const endDate = attr(tag, 'endDate')
+        const ms = new Date(endDate).getTime() - new Date(startDate).getTime()
+        slot(endDate.slice(0, 10)).sleepMs += ms
       }
     }
-  })
+  }
 
   return Object.entries(acc)
     .map(([date, d]) => {
