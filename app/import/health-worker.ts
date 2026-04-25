@@ -87,7 +87,7 @@ self.addEventListener('message', async (e: MessageEvent) => {
   const cutoffStr = cutoff.toISOString().slice(0, 10)
 
   const CHUNK = 10 * 1024 * 1024           // 10 MB at a time
-  const READ_FROM = Math.max(0, file.size - 200 * 1024 * 1024) // last 200 MB
+  const READ_FROM = Math.max(0, file.size - 400 * 1024 * 1024) // last 400 MB
   const total = file.size - READ_FROM
 
   const acc: Acc = {}
