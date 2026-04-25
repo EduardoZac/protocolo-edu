@@ -47,6 +47,18 @@ export async function POST(req: NextRequest) {
       return { date: f.started_at.slice(0, 10), hours: Math.round(hours * 10) / 10, goal: f.goal_reached }
     }) ?? []
 
+    // Color label map
+    const COLOR_LABELS: Record<string, string> = {
+      rojo: 'Rojo (jitomate, fresa, pimiento)',
+      naranja: 'Naranja (zanahoria, naranja, mango)',
+      amarillo: 'Amarillo (limón, maíz, piña)',
+      verde: 'Verde (espinaca, pepino, aguacate)',
+      crucifero: 'Crucífero (brócoli, col, kale)',
+      morado: 'Morado (arándano, berenjena, uva)',
+      blanco: 'Blanco (ajo, cebolla, nueces)',
+    }
+    const ALL_COLORS = Object.keys(COLOR_LABELS)
+
     const logSummary = logs?.map(l => ({
       date: l.date,
       hrv: l.hrv,
@@ -55,8 +67,18 @@ export async function POST(req: NextRequest) {
       steps: l.steps,
       resting_hr: l.resting_hr,
       energy: l.energy,
-      colors: l.colors?.length ?? 0,
+      colorsEaten: (l.colors ?? []) as string[],
+      colorsMissed: ALL_COLORS.filter(c => !(l.colors ?? []).includes(c)),
     })) ?? []
+
+    // Weekly color frequency
+    const colorFrequency: Record<string, number> = {}
+    for (const c of ALL_COLORS) {
+      colorFrequency[c] = logSummary.filter(l => l.colorsEaten.includes(c)).length
+    }
+    const consistentColors = ALL_COLORS.filter(c => colorFrequency[c] >= 5)
+    const missingColors = ALL_COLORS.filter(c => colorFrequency[c] === 0)
+    const rareColors = ALL_COLORS.filter(c => colorFrequency[c] > 0 && colorFrequency[c] < 3)
 
     // Compute quick correlations for Claude context
     const withHrv = logSummary.filter(l => l.hrv && l.sleep)
@@ -76,8 +98,15 @@ ${fastDurations.map(f => `  ${f.date}: ${f.hours}h ${f.goal ? '✓' : '✗'}`).j
 
 MÉTRICAS DIARIAS:
 ${logSummary.map(l =>
-  `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery ?? '—'}%, Sleep=${l.sleep ?? '—'}%, Steps=${l.steps ?? '—'}, Energía=${l.energy ?? '—'}/10, Colores=${l.colors}/7`
+  `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery ?? '—'}%, Sleep=${l.sleep ?? '—'}%, Steps=${l.steps ?? '—'}, Energía=${l.energy ?? '—'}/10
+    Colores comidos: ${l.colorsEaten.length > 0 ? l.colorsEaten.join(', ') : 'ninguno'}
+    Colores faltantes: ${l.colorsMissed.length > 0 ? l.colorsMissed.join(', ') : 'todos cubiertos ✓'}`
 ).join('\n') || '  Sin datos'}
+
+RESUMEN DE COLORES (arcoíris semanal):
+  Consistentes (≥5 días): ${consistentColors.map(c => COLOR_LABELS[c]).join(', ') || 'ninguno'}
+  Nunca comidos esta semana: ${missingColors.map(c => COLOR_LABELS[c]).join(', ') || 'ninguno — ¡perfecto!'}
+  Poco frecuentes (<3 días): ${rareColors.map(c => COLOR_LABELS[c]).join(', ') || 'ninguno'}
 
 PROMEDIOS SEMANALES:
   HRV promedio: ${avgHrv ? Math.round(avgHrv) + 'ms' : '—'}
@@ -98,9 +127,25 @@ CORRELACIÓN SUEÑO-HRV detectada:
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-7',
       max_tokens: 2048,
-      system: `Eres el coach de salud personal de Eduardo. Analizas sus métricas semanales de forma directa, honesta y motivadora.
-Responde SIEMPRE en español. Usa emojis con moderación.
-Formato: 3-4 párrafos cortos. Primero un resumen de cómo fue la semana, luego 1-2 correlaciones o patrones que detectes, y finalmente 1 recomendación concreta para la próxima semana.
+      system: `Eres el coach de salud personal de Eduardo, quien vive en Playa del Carmen y sigue un protocolo de longevidad basado en:
+
+PROTOCOLO DE EDUARDO:
+- Ayuno intermitente: meta 14h diarias, 5 días/semana. ≥16h es bonus. El ayuno activa sirtuinas, autofagia (empieza ~16-18h), mejora metabolismo.
+- Alimentación arcoíris: 7 colores al día = 7 grupos de polifenoles distintos. Los polifenoles activan las mismas vías de longevidad que el ayuno. Un plato beige es una oportunidad perdida.
+  • Rojo: jitomate, fresa, pimiento → licopeno, antocianinas
+  • Naranja: zanahoria, naranja, mango → betacaroteno
+  • Amarillo: limón, maíz, piña → luteína, zeaxantina
+  • Verde: espinaca, pepino, aguacate → clorofila, folato
+  • Crucífero: brócoli, col, kale → sulforafano (el más potente)
+  • Morado: arándano, berenjena, uva → resveratrol, antocianinas
+  • Blanco: ajo, cebolla, nueces → alicina, quercetina
+- HRV (WHOOP): >70ms = verde, 40-70ms = amarillo, <40ms = rojo. Es el indicador más sensible de recuperación.
+- Recovery WHOOP: >67% = verde, 34-67% = amarillo, <34% = rojo.
+- Sleep performance: >85% = óptimo.
+
+Analizas las métricas semanales de Eduardo de forma directa, honesta y motivadora.
+Responde SIEMPRE en español. Usa emojis con moderación (1-2 máximo).
+Formato: 3-4 párrafos cortos. Primero un resumen de cómo fue la semana (ayuno + métricas), luego interpreta los colores de alimentación (qué faltó, qué estuvo bien, qué polifenoles perdió), luego cualquier correlación que detectes, y finalmente 1 recomendación concreta y accionable para la próxima semana.
 Sé específico con los números. No uses listas con viñetas. Tono amigable pero directo.`,
       messages: [{ role: 'user', content: `Analiza mi semana:\n\n${dataContext}` }],
     })
