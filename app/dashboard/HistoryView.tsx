@@ -63,8 +63,35 @@ export default function HistoryView({ userId }: { userId: string }) {
   const avgHrv = logs.filter(l => l.hrv).map(l => l.hrv!).reduce((a, b) => a + b, 0) / (logs.filter(l => l.hrv).length || 1)
   const avgRecovery = logs.filter(l => l.recovery_score).map(l => l.recovery_score!).reduce((a, b) => a + b, 0) / (logs.filter(l => l.recovery_score).length || 1)
 
+  // Streak — consecutive days with goal_reached fast
+  const streak = (() => {
+    const goalDates = new Set(
+      fasts.filter(f => f.goal_reached).map(f => f.started_at.slice(0, 10))
+    )
+    let count = 0
+    const d = new Date()
+    // Allow today or yesterday as start
+    if (!goalDates.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1)
+    while (goalDates.has(d.toISOString().slice(0, 10))) {
+      count++
+      d.setDate(d.getDate() - 1)
+    }
+    return count
+  })()
+
   return (
     <div className="p-4 space-y-6 pb-10">
+
+      {/* Streak banner */}
+      {streak > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <span className="text-2xl">🔥</span>
+          <div>
+            <p className="text-amber-400 font-semibold text-sm">{streak} día{streak > 1 ? 's' : ''} de racha</p>
+            <p className="text-neutral-500 text-xs">Ayunos consecutivos ≥14h</p>
+          </div>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
