@@ -8,6 +8,20 @@ const GOAL_HOURS = 14
 const GOAL_MS = GOAL_HOURS * 3600 * 1000
 const CIRCUMFERENCE = 2 * Math.PI * 52 // r=52
 
+const PHASES = [
+  { minH: 0,  maxH: 4,  emoji: '🍽️', name: 'Digestión',       desc: 'Tu cuerpo procesa los alimentos. Glucosa e insulina elevadas.', color: '#94a3b8' },
+  { minH: 4,  maxH: 8,  emoji: '🔋', name: 'Transición',      desc: 'El glucógeno hepático se agota. El cuerpo busca fuentes alternas.', color: '#fb923c' },
+  { minH: 8,  maxH: 12, emoji: '🔥', name: 'Quema de grasa',  desc: 'Insulina baja. Tu cuerpo empieza a oxidar grasa como combustible.', color: '#f59e0b' },
+  { minH: 12, maxH: 16, emoji: '⚡', name: 'Cetosis leve',    desc: 'Cetonas en sangre. HGH aumenta hasta 5x. Claridad mental.', color: '#a78bfa' },
+  { minH: 16, maxH: 18, emoji: '🧬', name: 'Autofagia inicia', desc: 'Las células empiezan a reciclarse y limpiar proteínas dañadas.', color: '#34d399' },
+  { minH: 18, maxH: 24, emoji: '✨', name: 'Autofagia activa', desc: 'Regeneración celular intensa. Reducción de inflamación sistémica.', color: '#22c55e' },
+  { minH: 24, maxH: Infinity, emoji: '🌟', name: 'Autofagia máxima', desc: 'Regeneración profunda. Solo recomendado con supervisión.', color: '#4ade80' },
+]
+
+function getPhase(hours: number) {
+  return PHASES.find(p => hours >= p.minH && hours < p.maxH) ?? PHASES[0]
+}
+
 function formatElapsed(ms: number): string {
   const total = Math.floor(ms / 1000)
   const h = Math.floor(total / 3600)
@@ -107,6 +121,20 @@ export default function FastingTimer({ userId }: { userId: string }) {
   return (
     <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5">
       <p className="text-xs text-neutral-400 uppercase tracking-widest mb-4">Ayuno</p>
+
+      {/* Phase banner */}
+      {activeFast && (() => {
+        const phase = getPhase(hours)
+        return (
+          <div className="mb-4 rounded-xl px-3 py-2.5" style={{ backgroundColor: phase.color + '18', border: `1px solid ${phase.color}33` }}>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-base">{phase.emoji}</span>
+              <span className="text-xs font-semibold" style={{ color: phase.color }}>{phase.name}</span>
+            </div>
+            <p className="text-neutral-400 text-xs leading-relaxed">{phase.desc}</p>
+          </div>
+        )
+      })()}
 
       <div className="flex items-center gap-5">
         {/* SVG Ring */}
