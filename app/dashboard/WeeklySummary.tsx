@@ -22,7 +22,7 @@ export default function WeeklySummary({ userId }: Props) {
         body: JSON.stringify({ userId }),
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
       if (data.reason === 'no_data') {
         setSummary(null)
         setError('No hay suficientes datos esta semana para generar un resumen.')
@@ -31,7 +31,8 @@ export default function WeeklySummary({ userId }: Props) {
         setGenerated(true)
       }
     } catch (e) {
-      setError('Error generando resumen. Intenta de nuevo.')
+      const msg = e instanceof Error ? e.message : 'Error desconocido'
+      setError(msg)
       console.error(e)
     } finally {
       setLoading(false)

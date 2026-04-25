@@ -90,10 +90,14 @@ CORRELACIÓN SUEÑO-HRV detectada:
   Diferencia: ${Math.round(avgHrvHighSleep - avgHrvLowSleep)}ms` : ''}
 `.trim()
 
+    // Guard: ANTHROPIC_API_KEY must be set
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada en el servidor.' }, { status: 500 })
+    }
+
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-7',
-      max_tokens: 600,
-      thinking: { type: 'adaptive' },
+      max_tokens: 2048,
       system: `Eres el coach de salud personal de Eduardo. Analizas sus métricas semanales de forma directa, honesta y motivadora.
 Responde SIEMPRE en español. Usa emojis con moderación.
 Formato: 3-4 párrafos cortos. Primero un resumen de cómo fue la semana, luego 1-2 correlaciones o patrones que detectes, y finalmente 1 recomendación concreta para la próxima semana.
@@ -103,8 +107,9 @@ Sé específico con los números. No uses listas con viñetas. Tono amigable per
 
     const text = response.content.find(b => b.type === 'text')?.text ?? ''
     return NextResponse.json({ summary: text })
-  } catch (err) {
-    console.error('weekly-summary error:', err)
-    return NextResponse.json({ error: 'Failed to generate summary' }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('weekly-summary error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
