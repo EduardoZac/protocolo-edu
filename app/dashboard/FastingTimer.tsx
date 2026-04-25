@@ -16,11 +16,19 @@ function formatElapsed(ms: number): string {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+function toLocalDatetimeValue(isoStr: string): string {
+  const d = new Date(isoStr)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export default function FastingTimer({ userId }: { userId: string }) {
   const [activeFast, setActiveFast] = useState<Fast | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState('')
 
   const supabase = createClient()
 
@@ -60,6 +68,17 @@ export default function FastingTimer({ userId }: { userId: string }) {
       .single()
     setActiveFast(data)
     setElapsed(0)
+    setSaving(false)
+  }
+
+  async function saveStartTime() {
+    if (!activeFast || !editValue) return
+    setSaving(true)
+    const newStart = new Date(editValue).toISOString()
+    await supabase.from('fasts').update({ started_at: newStart }).eq('id', activeFast.id)
+    setActiveFast({ ...activeFast, started_at: newStart })
+    setElapsed(Date.now() - new Date(newStart).getTime())
+    setEditing(false)
     setSaving(false)
   }
 
@@ -125,7 +144,31 @@ export default function FastingTimer({ userId }: { userId: string }) {
             <>
               <div className="mb-3">
                 <p className="text-xs text-neutral-400 mb-1">Inicio</p>
-                <p className="font-mono text-sm text-neutral-100">{startTime}</p>
+                {editing ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="datetime-local"
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      className="bg-neutral-900 border border-neutral-600 rounded-lg px-2 py-1 text-sm text-neutral-100 focus:outline-none focus:border-amber-500 w-full"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={saveStartTime} disabled={saving} className="flex-1 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-medium">
+                        {saving ? '...' : 'Guardar'}
+                      </button>
+                      <button onClick={() => setEditing(false)} className="flex-1 py-1.5 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-neutral-300 text-xs">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setEditValue(toLocalDatetimeValue(activeFast.started_at)); setEditing(true) }}
+                    className="font-mono text-sm text-neutral-100 hover:text-amber-400 transition-colors text-left"
+                  >
+                    {startTime} ✎
+                  </button>
+                )}
               </div>
               <div className="mb-4">
                 <p className="text-xs text-neutral-400 mb-1">Horas</p>
