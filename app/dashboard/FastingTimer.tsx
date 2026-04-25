@@ -38,6 +38,7 @@ function toLocalDatetimeValue(isoStr: string): string {
 
 export default function FastingTimer({ userId }: { userId: string }) {
   const [activeFast, setActiveFast] = useState<Fast | null>(null)
+  const [lastFast, setLastFast] = useState<Fast | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -46,19 +47,16 @@ export default function FastingTimer({ userId }: { userId: string }) {
 
   const supabase = createClient()
 
-  // Load active fast on mount
+  // Load active fast and last completed fast on mount
   const loadActiveFast = useCallback(async () => {
-    const { data } = await supabase
-      .from('fasts')
-      .select('*')
-      .eq('user_id', userId)
-      .is('ended_at', null)
-      .maybeSingle()
+    const [{ data: active }, { data: last }] = await Promise.all([
+      supabase.from('fasts').select('*').eq('user_id', userId).is('ended_at', null).maybeSingle(),
+      supabase.from('fasts').select('*').eq('user_id', userId).not('ended_at', 'is', null).order('ended_at', { ascending: false }).limit(1).maybeSingle(),
+    ])
 
-    setActiveFast(data)
-    if (data) {
-      setElapsed(Date.now() - new Date(data.started_at).getTime())
-    }
+    setActiveFast(active)
+    if (active) setElapsed(Date.now() - new Date(active.started_at).getTime())
+    setLastFast(last)
     setLoading(false)
   }, [supabase, userId])
 
@@ -100,10 +98,12 @@ export default function FastingTimer({ userId }: { userId: string }) {
     if (!activeFast) return
     setSaving(true)
     const endedAt = new Date().toISOString()
+    const goalReachedNow = elapsed >= GOAL_MS
     await supabase
       .from('fasts')
-      .update({ ended_at: endedAt, goal_reached: elapsed >= GOAL_MS })
+      .update({ ended_at: endedAt, goal_reached: goalReachedNow })
       .eq('id', activeFast.id)
+    setLastFast({ ...activeFast, ended_at: endedAt, goal_reached: goalReachedNow })
     setActiveFast(null)
     setElapsed(0)
     setSaving(false)
@@ -210,8 +210,35 @@ export default function FastingTimer({ userId }: { userId: string }) {
             </>
           ) : (
             <div className="mb-4">
-              <p className="text-neutral-300 text-sm">Sin ayuno activo</p>
-              <p className="text-neutral-500 text-xs mt-1">Meta: {GOAL_HOURS}h diarias</p>
+              {lastFast ? (() => {
+                const lastMs = new Date(lastFast.ended_at!).getTime() - new Date(lastFast.started_at).getTime()
+                const lastHours = lastMs / 3600000
+                const lastPhase = getPhase(lastHours)
+                const lastGoal = lastFast.goal_reached ?? lastMs >= GOAL_MS
+                const fmt = (iso: string) => new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+                return (
+                  <div className="rounded-xl px-3 py-2.5 mb-2" style={{ backgroundColor: lastGoal ? '#22c55e18' : '#f59e0b18', border: `1px solid ${lastGoal ? '#22c55e33' : '#f59e0b33'}` }}>
+                    <p className="text-xs font-semibold mb-1.5" style={{ color: lastGoal ? '#22c55e' : '#f59e0b' }}>
+                      {lastGoal ? '✓ Meta alcanzada' : 'Último ayuno'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                      <span className="text-neutral-400">Duración</span>
+                      <span className="text-neutral-100 font-medium">{lastHours.toFixed(1)}h</span>
+                      <span className="text-neutral-400">Inicio</span>
+                      <span className="text-neutral-100">{fmt(lastFast.started_at)}</span>
+                      <span className="text-neutral-400">Fin</span>
+                      <span className="text-neutral-100">{fmt(lastFast.ended_at!)}</span>
+                      <span className="text-neutral-400">Fase</span>
+                      <span style={{ color: lastPhase.color }}>{lastPhase.emoji} {lastPhase.name}</span>
+                    </div>
+                  </div>
+                )
+              })() : (
+                <>
+                  <p className="text-neutral-300 text-sm">Sin ayuno activo</p>
+                  <p className="text-neutral-500 text-xs mt-1">Meta: {GOAL_HOURS}h diarias</p>
+                </>
+              )}
             </div>
           )}
 
