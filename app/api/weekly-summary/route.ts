@@ -125,7 +125,7 @@ CORRELACIÓN SUEÑO-HRV detectada:
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-7',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: `Eres el coach de salud personal de Eduardo, quien vive en Playa del Carmen y sigue un protocolo de longevidad basado en:
 
