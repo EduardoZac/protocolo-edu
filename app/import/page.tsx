@@ -149,7 +149,8 @@ export default function ImportPage() {
       {stage === 'parsing' && (
         <div className="flex flex-col items-center justify-center flex-1 gap-4 mt-20">
           <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-neutral-400 text-sm">Procesando últimos 90 días...</p>
+          <p className="text-neutral-400 text-sm">Procesando archivo completo…</p>
+          <p className="text-neutral-600 text-xs">Archivos grandes pueden tardar 1-2 min</p>
           <div className="w-48 h-1.5 bg-neutral-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full transition-all duration-300"

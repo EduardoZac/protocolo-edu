@@ -86,13 +86,15 @@ self.addEventListener('message', async (e: MessageEvent) => {
   cutoff.setDate(cutoff.getDate() - 90)
   const cutoffStr = cutoff.toISOString().slice(0, 10)
 
-  const CHUNK = 10 * 1024 * 1024           // 10 MB at a time
-  const READ_FROM = Math.max(0, file.size - 400 * 1024 * 1024) // last 400 MB
-  const total = file.size - READ_FROM
+  // Read the entire file — Apple Health stores step/HR data before WHOOP
+  // sleep/HRV data, so we can't just read from the end.
+  // Our fast string-search parser handles large files without blocking UI.
+  const CHUNK = 10 * 1024 * 1024  // 10 MB at a time
+  const total = file.size
 
   const acc: Acc = {}
   let remainder = ''
-  let offset = READ_FROM
+  let offset = 0
 
   try {
     while (offset < file.size) {
@@ -115,7 +117,7 @@ self.addEventListener('message', async (e: MessageEvent) => {
       processChunk(toProcess, cutoffStr, acc)
       offset = end
 
-      const pct = Math.round(((offset - READ_FROM) / total) * 100)
+      const pct = Math.round((offset / total) * 100)
       self.postMessage({ type: 'progress', pct })
     }
 
