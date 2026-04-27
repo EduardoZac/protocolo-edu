@@ -17,6 +17,10 @@
 .DS_Store
 *.pem
 
+# macOS Finder duplicates ("file 2.ts", "folder 2/", etc.)
+* 2.*
+* 2/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

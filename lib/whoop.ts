@@ -132,14 +132,31 @@ interface Paginated<T> { records: T[]; next_token?: string }
 
 function isoDate(d: Date) { return d.toISOString().slice(0, 10) }
 
-export async function fetchLastNDays(token: string, days: number) {
-  const start = new Date(Date.now() - days * 86400_000).toISOString()
-  const qs = `?start=${encodeURIComponent(start)}&limit=25`
+async function fetchAllPages<T>(token: string, basePath: string, baseQs: URLSearchParams, maxPages = 40): Promise<T[]> {
+  const all: T[] = []
+  let nextToken: string | undefined
+  for (let i = 0; i < maxPages; i++) {
+    const qs = new URLSearchParams(baseQs)
+    if (nextToken) qs.set('nextToken', nextToken)
+    const page = await whoopFetch<Paginated<T>>(token, `${basePath}?${qs}`)
+    all.push(...page.records)
+    if (!page.next_token) break
+    nextToken = page.next_token
+  }
+  return all
+}
+
+export async function fetchRange(token: string, startDate: Date, endDate: Date = new Date()) {
+  const qs = new URLSearchParams({
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    limit: '25',
+  })
 
   const [recovery, sleep, cycle] = await Promise.all([
-    whoopFetch<Paginated<RecoveryRecord>>(token, `/v2/recovery${qs}`),
-    whoopFetch<Paginated<SleepRecord>>(token, `/v2/activity/sleep${qs}`),
-    whoopFetch<Paginated<CycleRecord>>(token, `/v2/cycle${qs}`),
+    fetchAllPages<RecoveryRecord>(token, '/v2/recovery', qs),
+    fetchAllPages<SleepRecord>(token, '/v2/activity/sleep', qs),
+    fetchAllPages<CycleRecord>(token, '/v2/cycle', qs),
   ])
 
   // Bucket by date (use sleep end / cycle start day)
@@ -151,7 +168,7 @@ export async function fetchLastNDays(token: string, days: number) {
     strain?: number
   }> = {}
 
-  for (const r of recovery.records) {
+  for (const r of recovery) {
     if (!r.score) continue
     const day = isoDate(new Date(r.created_at))
     byDate[day] ??= {}
@@ -159,14 +176,13 @@ export async function fetchLastNDays(token: string, days: number) {
     byDate[day].recovery_score = Math.round(r.score.recovery_score)
     byDate[day].resting_hr = Math.round(r.score.resting_heart_rate)
   }
-  for (const s of sleep.records) {
+  for (const s of sleep) {
     if (!s.score) continue
-    // Sleep belongs to the day you wake up
     const day = isoDate(new Date(s.end))
     byDate[day] ??= {}
     byDate[day].sleep_performance = Math.round(s.score.sleep_performance_percentage)
   }
-  for (const c of cycle.records) {
+  for (const c of cycle) {
     if (!c.score) continue
     const day = isoDate(new Date(c.start))
     byDate[day] ??= {}
@@ -174,4 +190,8 @@ export async function fetchLastNDays(token: string, days: number) {
   }
 
   return byDate
+}
+
+export async function fetchLastNDays(token: string, days: number) {
+  return fetchRange(token, new Date(Date.now() - days * 86400_000))
 }
