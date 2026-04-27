@@ -137,9 +137,9 @@ export async function fetchLastNDays(token: string, days: number) {
   const qs = `?start=${encodeURIComponent(start)}&limit=25`
 
   const [recovery, sleep, cycle] = await Promise.all([
-    whoopFetch<Paginated<RecoveryRecord>>(token, `/v1/recovery${qs}`),
-    whoopFetch<Paginated<SleepRecord>>(token, `/v1/activity/sleep${qs}`),
-    whoopFetch<Paginated<CycleRecord>>(token, `/v1/cycle${qs}`),
+    whoopFetch<Paginated<RecoveryRecord>>(token, `/v2/recovery${qs}`),
+    whoopFetch<Paginated<SleepRecord>>(token, `/v2/activity/sleep${qs}`),
+    whoopFetch<Paginated<CycleRecord>>(token, `/v2/cycle${qs}`),
   ])
 
   // Bucket by date (use sleep end / cycle start day)
