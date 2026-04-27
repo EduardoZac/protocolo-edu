@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase'
 import FastingTimer from './FastingTimer'
 import RainbowTracker from './RainbowTracker'
 import WhoopLogger from './WhoopLogger'
+import WhoopConnect from './WhoopConnect'
 import DailyNote from './DailyNote'
 import HistoryView from './HistoryView'
 
@@ -96,6 +97,7 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-y-auto">
         {tab === 'hoy' ? (
           <div className="p-4 space-y-4 pb-16">
+            <WhoopConnect userId={userId} />
             {/* Row 1: Fasting + Rainbow */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FastingTimer userId={userId} />
