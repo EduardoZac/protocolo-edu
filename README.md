@@ -106,10 +106,33 @@ Para ajustar los umbrales: edita las funciones `recoveryColor`, `hrvColor`, etc.
 
 ---
 
+## Whoop API + Morning Brief (auto)
+
+### Setup
+
+1. Corre `supabase/whoop_migration.sql` en SQL Editor → crea `whoop_tokens` y `briefs`.
+2. Crea app en [developer.whoop.com](https://developer.whoop.com):
+   - Redirect URIs: `http://localhost:3000/api/whoop/callback` + `https://TU_DOMINIO.vercel.app/api/whoop/callback`
+   - Scopes: `read:recovery read:sleep read:cycles read:workout read:profile offline`
+3. Env vars (Vercel + `.env.local`):
+   - `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`, `WHOOP_REDIRECT_URI`
+   - `SUPABASE_SERVICE_KEY`, `ANTHROPIC_API_KEY`
+   - `HEALTH_SYNC_SECRET` → `openssl rand -hex 32`
+4. Deploy. En el dashboard, click **Conectar** en la card de Whoop.
+5. `vercel.json` corre `/api/cron/daily` cada día a las 14:00 UTC (~8 AM CDMX): sync + brief.
+
+### Endpoints
+
+- `GET /api/whoop/auth` — inicia OAuth.
+- `GET /api/whoop/callback` — guarda tokens.
+- `POST /api/whoop/sync` — fetch últimos 7 días → upsert `daily_logs`.
+- `POST /api/morning-brief` — Claude genera brief (Readiness / Foco / Ventana / Insight) → `briefs`.
+- `GET /api/cron/daily` — encadena ambos (Vercel Cron lo llama).
+
 ## Posibles extensiones futuras
 
-- **Semana de racha**: mostrar cuántos días consecutivos con ≥14h de ayuno
-- **Export CSV**: botón para descargar historial completo
-- **Notificaciones**: recordatorio vía web push al llegar a 14h
-- **API WHOOP**: cuando WHOOP abra su API pública, conectar automáticamente
+- **Auto-complete de hábitos** desde Whoop (sueño ≥7h → ✅).
+- **Email del brief** vía Resend cada mañana.
+- **Briefs semanal y mensual** con Claude.
+- **Export CSV** del historial.
 - **Modo ciclo**: integrar training load con datos de ciclismo/running
