@@ -44,6 +44,9 @@ export default function FastingTimer({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
+  const [editingLast, setEditingLast] = useState(false)
+  const [lastStartValue, setLastStartValue] = useState('')
+  const [lastEndValue, setLastEndValue] = useState('')
 
   const supabase = createClient()
 
@@ -91,6 +94,25 @@ export default function FastingTimer({ userId }: { userId: string }) {
     setActiveFast({ ...activeFast, started_at: newStart })
     setElapsed(Date.now() - new Date(newStart).getTime())
     setEditing(false)
+    setSaving(false)
+  }
+
+  async function saveLastFast() {
+    if (!lastFast || !lastStartValue || !lastEndValue) return
+    const newStart = new Date(lastStartValue).toISOString()
+    const newEnd = new Date(lastEndValue).toISOString()
+    if (new Date(newEnd).getTime() <= new Date(newStart).getTime()) {
+      alert('La hora de fin debe ser después de la de inicio.')
+      return
+    }
+    setSaving(true)
+    const goalReachedNow = new Date(newEnd).getTime() - new Date(newStart).getTime() >= GOAL_MS
+    await supabase
+      .from('fasts')
+      .update({ started_at: newStart, ended_at: newEnd, goal_reached: goalReachedNow })
+      .eq('id', lastFast.id)
+    setLastFast({ ...lastFast, started_at: newStart, ended_at: newEnd, goal_reached: goalReachedNow })
+    setEditingLast(false)
     setSaving(false)
   }
 
@@ -218,19 +240,64 @@ export default function FastingTimer({ userId }: { userId: string }) {
                 const fmt = (iso: string) => new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
                 return (
                   <div className="rounded-xl px-3 py-2.5 mb-2" style={{ backgroundColor: lastGoal ? '#22c55e18' : '#f59e0b18', border: `1px solid ${lastGoal ? '#22c55e33' : '#f59e0b33'}` }}>
-                    <p className="text-xs font-semibold mb-1.5" style={{ color: lastGoal ? '#22c55e' : '#f59e0b' }}>
-                      {lastGoal ? '✓ Meta alcanzada' : 'Último ayuno'}
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
-                      <span className="text-neutral-400">Duración</span>
-                      <span className="text-neutral-100 font-medium">{lastHours.toFixed(1)}h</span>
-                      <span className="text-neutral-400">Inicio</span>
-                      <span className="text-neutral-100">{fmt(lastFast.started_at)}</span>
-                      <span className="text-neutral-400">Fin</span>
-                      <span className="text-neutral-100">{fmt(lastFast.ended_at!)}</span>
-                      <span className="text-neutral-400">Fase</span>
-                      <span style={{ color: lastPhase.color }}>{lastPhase.emoji} {lastPhase.name}</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs font-semibold" style={{ color: lastGoal ? '#22c55e' : '#f59e0b' }}>
+                        {lastGoal ? '✓ Meta alcanzada' : 'Último ayuno'}
+                      </p>
+                      {!editingLast && (
+                        <button
+                          onClick={() => {
+                            setLastStartValue(toLocalDatetimeValue(lastFast.started_at))
+                            setLastEndValue(toLocalDatetimeValue(lastFast.ended_at!))
+                            setEditingLast(true)
+                          }}
+                          className="text-[10px] text-neutral-400 hover:text-amber-400"
+                        >
+                          Editar ✎
+                        </button>
+                      )}
                     </div>
+                    {editingLast ? (
+                      <div className="flex flex-col gap-2 text-xs">
+                        <label className="text-neutral-400">
+                          Inicio
+                          <input
+                            type="datetime-local"
+                            value={lastStartValue}
+                            onChange={e => setLastStartValue(e.target.value)}
+                            className="mt-1 w-full bg-neutral-900 border border-neutral-600 rounded-lg px-2 py-1 text-neutral-100 focus:outline-none focus:border-amber-500"
+                          />
+                        </label>
+                        <label className="text-neutral-400">
+                          Fin
+                          <input
+                            type="datetime-local"
+                            value={lastEndValue}
+                            onChange={e => setLastEndValue(e.target.value)}
+                            className="mt-1 w-full bg-neutral-900 border border-neutral-600 rounded-lg px-2 py-1 text-neutral-100 focus:outline-none focus:border-amber-500"
+                          />
+                        </label>
+                        <div className="flex gap-2 mt-1">
+                          <button onClick={saveLastFast} disabled={saving} className="flex-1 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-medium">
+                            {saving ? '...' : 'Guardar'}
+                          </button>
+                          <button onClick={() => setEditingLast(false)} className="flex-1 py-1.5 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-neutral-300">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                        <span className="text-neutral-400">Duración</span>
+                        <span className="text-neutral-100 font-medium">{lastHours.toFixed(1)}h</span>
+                        <span className="text-neutral-400">Inicio</span>
+                        <span className="text-neutral-100">{fmt(lastFast.started_at)}</span>
+                        <span className="text-neutral-400">Fin</span>
+                        <span className="text-neutral-100">{fmt(lastFast.ended_at!)}</span>
+                        <span className="text-neutral-400">Fase</span>
+                        <span style={{ color: lastPhase.color }}>{lastPhase.emoji} {lastPhase.name}</span>
+                      </div>
+                    )}
                   </div>
                 )
               })() : (
