@@ -55,7 +55,10 @@ export async function POST(req: NextRequest) {
   const fmtMin = (m: number | null) => m == null ? '—' : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
   const logLines = (logs ?? []).map(l => {
     const sleepDeficit = l.sleep_need_min && l.sleep_total_min ? l.sleep_need_min - l.sleep_total_min : null
-    return `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery_score ?? '—'}%, Sleep=${l.sleep_performance ?? '—'}% (dormido ${fmtMin(l.sleep_total_min)}, REM ${fmtMin(l.sleep_rem_min)}, profundo ${fmtMin(l.sleep_deep_min)}, eficiencia ${l.sleep_efficiency ?? '—'}%${sleepDeficit != null && sleepDeficit > 30 ? `, DÉFICIT ${fmtMin(sleepDeficit)}` : ''}), Resp=${l.respiratory_rate ?? '—'}rpm, RHR=${l.resting_hr ?? '—'}, SpO2=${l.spo2 ?? '—'}%, Skin=${l.skin_temp_celsius ?? '—'}°C, Strain=${l.strain ?? '—'}, kcal=${l.kilojoules ? Math.round(l.kilojoules / 4.184) : '—'}, Energía=${l.energy ?? '—'}/10, Colores=${(l.colors ?? []).length}/7${l.notes ? `\n    Nota: ${l.notes}` : ''}`
+    const bp = l.bp_systolic && l.bp_diastolic ? `${l.bp_systolic}/${l.bp_diastolic}` : '—'
+    const glucose = l.glucose_avg ? `avg=${l.glucose_avg} (${l.glucose_min ?? '?'}-${l.glucose_max ?? '?'}, TIR=${l.glucose_time_in_range ?? '?'}%)` : '—'
+    const body = l.weight_kg ? `${l.weight_kg}kg${l.body_fat_pct ? ` ${l.body_fat_pct}%bf` : ''}` : '—'
+    return `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery_score ?? '—'}%, Sleep=${l.sleep_performance ?? '—'}% (dormido ${fmtMin(l.sleep_total_min)}, REM ${fmtMin(l.sleep_rem_min)}, profundo ${fmtMin(l.sleep_deep_min)}, eficiencia ${l.sleep_efficiency ?? '—'}%${sleepDeficit != null && sleepDeficit > 30 ? `, DÉFICIT ${fmtMin(sleepDeficit)}` : ''}), Resp=${l.respiratory_rate ?? '—'}rpm, RHR=${l.resting_hr ?? '—'}, SpO2=${l.spo2 ?? '—'}%, Skin=${l.skin_temp_celsius ?? '—'}°C, Strain=${l.strain ?? '—'}, kcal=${l.kilojoules ? Math.round(l.kilojoules / 4.184) : '—'} (active ${l.active_kcal ?? '—'}), Pasos=${l.steps ?? '—'}, BP=${bp}, Glucosa=${glucose}, VO2max=${l.vo2_max ?? '—'}, Peso=${body}, Mind=${l.mindfulness_min ?? '—'}min, Energía=${l.energy ?? '—'}/10, Colores=${(l.colors ?? []).length}/7${l.notes ? `\n    Nota: ${l.notes}` : ''}`
   }).join('\n') || '  Sin datos'
 
   const ctx = `
@@ -81,9 +84,9 @@ AYER:
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 800,
-    system: `Eres el coach de salud personal de Eduardo (Playa del Carmen, protocolo de longevidad: ayuno 14h+, arcoíris 7 colores, Whoop).
+    system: `Eres el coach de salud personal de Eduardo (Playa del Carmen, protocolo de longevidad: ayuno 14h+, arcoíris 7 colores, Whoop, Apple Health).
 
-Umbrales: HRV ≥70 verde / 40-69 amarillo / <40 rojo. Recovery ≥67 verde / 34-66 amarillo / <34 rojo. Sleep ≥85 óptimo. Eficiencia de sueño ≥90% es buena. Respiratoria normal de Eduardo: monitorea cambios >+1rpm sostenidos (señal de inflamación o enfermedad). Skin temp: detecta desviaciones >+0.5°C de su baseline.
+Umbrales: HRV ≥70 verde / 40-69 amarillo / <40 rojo. Recovery ≥67 verde / 34-66 amarillo / <34 rojo. Sleep ≥85 óptimo. Eficiencia de sueño ≥90% es buena. Respiratoria normal de Eduardo: monitorea cambios >+1rpm sostenidos (señal de inflamación o enfermedad). Skin temp: detecta desviaciones >+0.5°C de su baseline. Glucosa óptima: avg <100 mg/dL en ayunas, TIR (70-140) ≥90%, picos <140. Presión: <120/80 óptimo. Pasos: ≥8000 base. Mindfulness ≥10min/día deseable.
 
 Genera un MORNING BRIEF corto, accionable, en español, con esta estructura EXACTA:
 
@@ -97,7 +100,7 @@ Genera un MORNING BRIEF corto, accionable, en español, con esta estructura EXAC
 1 frase recomendando ventana de hoy basada en últimos ayunos y recovery.
 
 **Insight**
-1 correlación o patrón que detectes (ayuno↔recovery, colores↔HRV, strain↔sleep, REM↔HRV, déficit acumulado↔recovery, respiratoria↔inflamación, skin temp↔enfermedad incipiente). Sé específico con números. Si no hay datos suficientes, di "sin patrón claro aún".
+1 correlación o patrón que detectes (ayuno↔recovery, colores↔HRV, strain↔sleep, REM↔HRV, déficit acumulado↔recovery, respiratoria↔inflamación, skin temp↔enfermedad, glucosa↔sueño, pasos↔HRV, peso↔ayuno, presión↔strain). Sé específico con números. Si no hay datos suficientes, di "sin patrón claro aún".
 
 Sin saludos. Sin emojis. Máximo 180 palabras totales.`,
     messages: [{ role: 'user', content: ctx }],
