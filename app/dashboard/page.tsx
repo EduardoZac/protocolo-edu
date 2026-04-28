@@ -100,7 +100,6 @@ export default function DashboardPage() {
         {tab === 'hoy' ? (
           <div className="p-4 space-y-4 pb-16">
             <WhoopConnect userId={userId} />
-            <MorningBrief userId={userId} />
             <AppleHealthCard userId={userId} date={today} />
             {/* Row 1: Fasting + Rainbow */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -112,6 +111,7 @@ export default function DashboardPage() {
               <WhoopLogger userId={userId} date={today} />
               <DailyNote userId={userId} date={today} />
             </div>
+            <MorningBrief userId={userId} />
           </div>
         ) : (
           <HistoryView userId={userId} />
