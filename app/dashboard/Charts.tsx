@@ -50,7 +50,7 @@ export default function Charts({ logs, fasts }: Props) {
   const sleepData = logsAsc.filter(l => l.sleep_performance).map(l => ({ date: fmt(l.date), v: l.sleep_performance }))
   const recoveryData = logsAsc.filter(l => l.recovery_score).map(l => ({ date: fmt(l.date), v: l.recovery_score }))
   const stepsData = logsAsc.filter(l => l.steps).map(l => ({ date: fmt(l.date), v: Math.round((l.steps ?? 0) / 1000 * 10) / 10 }))
-  const fastData = fastsAsc.map(f => ({ date: fmt(f.started_at), v: getDuration(f), goal: f.goal_reached }))
+  const fastData = fastsAsc.map(f => ({ date: fmt(f.started_at.slice(0, 10)), v: getDuration(f), goal: f.goal_reached }))
 
   return (
     <div className="space-y-4">
