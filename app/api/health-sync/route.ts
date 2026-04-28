@@ -41,6 +41,17 @@ interface HAEMetric {
   data: HAEDatum[]
 }
 
+// Episodic metrics aren't recorded daily — use the latest sample regardless of target date.
+// Cumulative metrics (steps, energy, etc.) must be filtered to the target day.
+const EPISODIC_METRICS = new Set([
+  'weight_body_mass',
+  'body_fat_percentage',
+  'lean_body_mass',
+  'waist_circumference',
+  'vo2_max',
+  'blood_pressure',
+])
+
 // Map HAE metric names → our fields. Some metrics produce multiple fields (glucose, BP).
 const HAE_MAP: Record<string, (m: HAEMetric, units: string) => Record<string, number | undefined>> = {
   step_count: (m) => ({ steps: sumQty(m) }),
@@ -179,9 +190,10 @@ export async function POST(req: NextRequest) {
     for (const m of metrics) {
       const handler = HAE_MAP[m.name]
       if (!handler) continue
-      const filtered = filterToDate(m, date)
-      if (!filtered.data.length) continue
-      const fields = handler(filtered, m.units ?? '')
+      // Episodic metrics: use full series and take the latest. Cumulative: filter to the target day.
+      const source = EPISODIC_METRICS.has(m.name) ? m : filterToDate(m, date)
+      if (!source.data.length) continue
+      const fields = handler(source, m.units ?? '')
       for (const [k, v] of Object.entries(fields)) {
         if (v != null) payload[k] = v
       }
