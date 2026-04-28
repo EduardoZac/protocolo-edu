@@ -57,7 +57,7 @@ const HAE_MAP: Record<string, (m: HAEMetric, units: string) => Record<string, nu
   step_count: (m) => ({ steps: sumQty(m) }),
   flights_climbed: (m) => ({ flights_climbed: sumQty(m) }),
   walking_running_distance: (m, u) => ({ distance_km: kmFrom(sumQty(m), u) }),
-  active_energy: (m) => ({ active_kcal: sumQty(m) }),
+  active_energy: (m, u) => ({ active_kcal: kcalFromEnergy(sumQty(m), u) }),
   apple_exercise_time: (m) => ({ exercise_min: sumQty(m) }),
   apple_stand_hour: (m) => ({ stand_hours: sumQty(m) }),
   mindful_minutes: (m) => ({ mindfulness_min: sumQty(m) }),
@@ -107,6 +107,12 @@ function latestQty(m: HAEMetric): number | undefined {
     if (m.data[i].qty != null) return m.data[i].qty
   }
   return undefined
+}
+function kcalFromEnergy(v: number | undefined, units: string): number | undefined {
+  if (v == null) return undefined
+  // HAE may report active_energy as kJ depending on user/app locale.
+  if (/kj/i.test(units)) return Math.round(v / 4.184)
+  return Math.round(v)
 }
 function kgFrom(v: number | undefined, units: string): number | undefined {
   if (v == null) return undefined
