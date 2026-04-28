@@ -126,16 +126,23 @@ function pct(v: number | undefined): number | undefined {
 function round1(n: number) { return Math.round(n * 10) / 10 }
 function round2(n: number) { return Math.round(n * 100) / 100 }
 
-// Pick the date from HAE: latest data point's date (YYYY-MM-DD).
+// Pick the most recent YYYY-MM-DD across ALL metrics' data points.
 function inferHAEDate(metrics: HAEMetric[]): string | null {
+  let latest: string | null = null
   for (const m of metrics) {
-    const last = m.data[m.data.length - 1]
-    if (last?.date) {
-      const d = last.date.slice(0, 10)
-      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
+    for (const d of m.data) {
+      if (!d.date) continue
+      const ymd = d.date.slice(0, 10)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) continue
+      if (!latest || ymd > latest) latest = ymd
     }
   }
-  return null
+  return latest
+}
+
+// Filter metric.data to only entries whose date matches target YYYY-MM-DD.
+function filterToDate(m: HAEMetric, ymd: string): HAEMetric {
+  return { ...m, data: m.data.filter(d => d.date && d.date.slice(0, 10) === ymd) }
 }
 
 // === Handler ===
@@ -172,7 +179,9 @@ export async function POST(req: NextRequest) {
     for (const m of metrics) {
       const handler = HAE_MAP[m.name]
       if (!handler) continue
-      const fields = handler(m, m.units ?? '')
+      const filtered = filterToDate(m, date)
+      if (!filtered.data.length) continue
+      const fields = handler(filtered, m.units ?? '')
       for (const [k, v] of Object.entries(fields)) {
         if (v != null) payload[k] = v
       }
