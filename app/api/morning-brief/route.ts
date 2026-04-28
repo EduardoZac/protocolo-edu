@@ -52,9 +52,11 @@ export async function POST(req: NextRequest) {
     return `  ${f.started_at.slice(0, 10)}: ${Math.round(h * 10) / 10}h ${f.goal_reached ? '✓' : '✗'}`
   }).join('\n') || '  Sin datos'
 
-  const logLines = (logs ?? []).map(l =>
-    `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery_score ?? '—'}%, Sleep=${l.sleep_performance ?? '—'}%, Strain=${l.strain ?? '—'}, Energía=${l.energy ?? '—'}/10, Colores=${(l.colors ?? []).length}/7${l.notes ? `\n    Nota: ${l.notes}` : ''}`
-  ).join('\n') || '  Sin datos'
+  const fmtMin = (m: number | null) => m == null ? '—' : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
+  const logLines = (logs ?? []).map(l => {
+    const sleepDeficit = l.sleep_need_min && l.sleep_total_min ? l.sleep_need_min - l.sleep_total_min : null
+    return `  ${l.date}: HRV=${l.hrv ?? '—'}ms, Rec=${l.recovery_score ?? '—'}%, Sleep=${l.sleep_performance ?? '—'}% (dormido ${fmtMin(l.sleep_total_min)}, REM ${fmtMin(l.sleep_rem_min)}, profundo ${fmtMin(l.sleep_deep_min)}, eficiencia ${l.sleep_efficiency ?? '—'}%${sleepDeficit != null && sleepDeficit > 30 ? `, DÉFICIT ${fmtMin(sleepDeficit)}` : ''}), Resp=${l.respiratory_rate ?? '—'}rpm, RHR=${l.resting_hr ?? '—'}, SpO2=${l.spo2 ?? '—'}%, Skin=${l.skin_temp_celsius ?? '—'}°C, Strain=${l.strain ?? '—'}, kcal=${l.kilojoules ? Math.round(l.kilojoules / 4.184) : '—'}, Energía=${l.energy ?? '—'}/10, Colores=${(l.colors ?? []).length}/7${l.notes ? `\n    Nota: ${l.notes}` : ''}`
+  }).join('\n') || '  Sin datos'
 
   const ctx = `
 HOY ES ${today}.
@@ -81,23 +83,23 @@ AYER:
     max_tokens: 800,
     system: `Eres el coach de salud personal de Eduardo (Playa del Carmen, protocolo de longevidad: ayuno 14h+, arcoíris 7 colores, Whoop).
 
-Umbrales: HRV ≥70 verde / 40-69 amarillo / <40 rojo. Recovery ≥67 verde / 34-66 amarillo / <34 rojo. Sleep ≥85 óptimo.
+Umbrales: HRV ≥70 verde / 40-69 amarillo / <40 rojo. Recovery ≥67 verde / 34-66 amarillo / <34 rojo. Sleep ≥85 óptimo. Eficiencia de sueño ≥90% es buena. Respiratoria normal de Eduardo: monitorea cambios >+1rpm sostenidos (señal de inflamación o enfermedad). Skin temp: detecta desviaciones >+0.5°C de su baseline.
 
 Genera un MORNING BRIEF corto, accionable, en español, con esta estructura EXACTA:
 
 **Readiness**
-1 frase con el estado del cuerpo hoy (recovery + HRV + sleep).
+1-2 frases con el estado del cuerpo hoy. Cita el dato más relevante (recovery, HRV, sleep performance, eficiencia de sueño, déficit de sueño, REM/deep, respiratoria, skin temp).
 
 **Foco del día**
-1-2 acciones concretas en función del recovery: si verde → empuja entrenamiento/cognitivo; si amarillo → mantén; si rojo → recupera (sueño, comida, menos café).
+1-2 acciones concretas en función del recovery + déficit de sueño: si verde y sin déficit → empuja entrenamiento/cognitivo; si amarillo o déficit moderado → mantén; si rojo o déficit grande → recupera (más sueño hoy, comida densa, menos café).
 
 **Ventana de ayuno**
 1 frase recomendando ventana de hoy basada en últimos ayunos y recovery.
 
 **Insight**
-1 correlación o patrón que detectes entre los datos (ayuno↔recovery, colores↔HRV, strain↔sleep). Si no hay datos suficientes, di "sin patrón claro aún".
+1 correlación o patrón que detectes (ayuno↔recovery, colores↔HRV, strain↔sleep, REM↔HRV, déficit acumulado↔recovery, respiratoria↔inflamación, skin temp↔enfermedad incipiente). Sé específico con números. Si no hay datos suficientes, di "sin patrón claro aún".
 
-Sin saludos. Sin emojis. Máximo 150 palabras totales.`,
+Sin saludos. Sin emojis. Máximo 180 palabras totales.`,
     messages: [{ role: 'user', content: ctx }],
   })
 
