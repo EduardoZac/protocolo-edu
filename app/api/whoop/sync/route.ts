@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchLastNDays, getValidAccessToken } from '@/lib/whoop'
+import { fetchLastNDays, getValidAccessToken, metricsToRow } from '@/lib/whoop'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,16 +36,7 @@ export async function POST(req: NextRequest) {
     const days = await fetchLastNDays(token, 7)
     const supabase = admin()
 
-    const rows = Object.entries(days).map(([date, m]) => ({
-      user_id: userId,
-      date,
-      ...(m.hrv != null && { hrv: m.hrv }),
-      ...(m.recovery_score != null && { recovery_score: m.recovery_score }),
-      ...(m.sleep_performance != null && { sleep_performance: m.sleep_performance }),
-      ...(m.strain != null && { strain: m.strain }),
-      ...(m.resting_hr != null && { resting_hr: m.resting_hr }),
-      updated_at: new Date().toISOString(),
-    }))
+    const rows = Object.entries(days).map(([date, m]) => metricsToRow(userId!, date, m))
 
     if (!rows.length) return NextResponse.json({ ok: true, synced: 0 })
 

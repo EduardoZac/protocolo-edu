@@ -21,6 +21,23 @@ export interface DailyLog {
   // Apple Health (auto-sync via Shortcut)
   resting_hr: number | null
   steps: number | null
+  // WHOOP extended (auto-sync via API)
+  sleep_total_min: number | null
+  sleep_in_bed_min: number | null
+  sleep_light_min: number | null
+  sleep_deep_min: number | null
+  sleep_rem_min: number | null
+  sleep_awake_min: number | null
+  sleep_efficiency: number | null
+  sleep_consistency: number | null
+  sleep_need_min: number | null
+  sleep_disturbances: number | null
+  respiratory_rate: number | null
+  skin_temp_celsius: number | null
+  spo2: number | null
+  kilojoules: number | null
+  avg_hr: number | null
+  max_hr: number | null
   // Subjective
   energy: number | null             // 1-10
   notes: string | null
