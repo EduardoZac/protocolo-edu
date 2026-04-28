@@ -3,31 +3,45 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+// Whitelist of fields the iOS Shortcut can send. Order = also the response order.
+const NUMERIC_FIELDS = [
+  // Apple Health basics
+  'resting_hr', 'steps', 'flights_climbed', 'distance_km',
+  'active_kcal', 'exercise_min', 'stand_hours', 'mindfulness_min',
+  // Antropometría
+  'weight_kg', 'body_fat_pct', 'lean_mass_kg', 'waist_cm',
+  // Metabólicas (CGM / glucómetro)
+  'glucose_avg', 'glucose_min', 'glucose_max', 'glucose_time_in_range',
+  // Cardiovasculares
+  'bp_systolic', 'bp_diastolic', 'vo2_max',
+  // Legacy (backwards compat)
+  'hrv',
+] as const
+
+const INT_FIELDS = new Set([
+  'resting_hr', 'steps', 'flights_climbed',
+  'active_kcal', 'exercise_min', 'stand_hours', 'mindfulness_min',
+  'glucose_time_in_range', 'bp_systolic', 'bp_diastolic', 'hrv',
+])
+
 export async function POST(req: NextRequest) {
-  // Auth via secret token
   const secret = req.headers.get('x-sync-secret')
   if (!secret || secret !== process.env.HEALTH_SYNC_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const body = await req.json()
-  const { date, hrv, sleep_hours, resting_hr, steps } = body
+  const { date, sleep_hours } = body
 
   if (!date) {
     return NextResponse.json({ error: 'date is required' }, { status: 400 })
   }
-
-  // sleep_hours → sleep_performance % (goal: 8h)
-  const sleep_performance = sleep_hours != null
-    ? Math.min(Math.round((sleep_hours / 8) * 100), 100)
-    : null
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  // Find user — this endpoint is single-user, use the owner's email
   const { data: users } = await supabase.auth.admin.listUsers()
   const user = users?.users?.[0]
   if (!user) {
@@ -40,10 +54,17 @@ export async function POST(req: NextRequest) {
     updated_at: new Date().toISOString(),
   }
 
-  if (hrv != null) payload.hrv = Math.round(hrv)
-  if (sleep_performance != null) payload.sleep_performance = sleep_performance
-  if (resting_hr != null) payload.resting_hr = Math.round(resting_hr)
-  if (steps != null) payload.steps = Math.round(steps)
+  // sleep_hours → sleep_performance % (goal: 8h) — only if Whoop hasn't already filled it
+  if (sleep_hours != null) {
+    const sleep_performance = Math.min(Math.round((sleep_hours / 8) * 100), 100)
+    payload.sleep_performance = sleep_performance
+  }
+
+  for (const field of NUMERIC_FIELDS) {
+    const v = body[field]
+    if (v == null || isNaN(Number(v))) continue
+    payload[field] = INT_FIELDS.has(field) ? Math.round(Number(v)) : Number(v)
+  }
 
   const { error } = await supabase
     .from('daily_logs')
@@ -53,5 +74,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, date, synced: Object.keys(payload).filter(k => k !== 'user_id' && k !== 'date' && k !== 'updated_at') })
+  return NextResponse.json({
+    ok: true,
+    date,
+    synced: Object.keys(payload).filter(k => !['user_id', 'date', 'updated_at'].includes(k)),
+  })
 }

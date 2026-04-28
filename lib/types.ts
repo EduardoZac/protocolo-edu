@@ -38,6 +38,24 @@ export interface DailyLog {
   kilojoules: number | null
   avg_hr: number | null
   max_hr: number | null
+  // Apple Health (auto-sync via Shortcut)
+  weight_kg: number | null
+  body_fat_pct: number | null
+  lean_mass_kg: number | null
+  waist_cm: number | null
+  glucose_avg: number | null
+  glucose_min: number | null
+  glucose_max: number | null
+  glucose_time_in_range: number | null
+  bp_systolic: number | null
+  bp_diastolic: number | null
+  vo2_max: number | null
+  active_kcal: number | null
+  exercise_min: number | null
+  stand_hours: number | null
+  mindfulness_min: number | null
+  flights_climbed: number | null
+  distance_km: number | null
   // Subjective
   energy: number | null             // 1-10
   notes: string | null
