@@ -129,7 +129,7 @@ export default function HistoryView({ userId }: { userId: string }) {
               return (
                 <div key={fast.id} className="flex items-center gap-3">
                   <span className="text-neutral-400 text-xs w-20 flex-shrink-0 text-right">
-                    {formatDate(fast.started_at)}
+                    {formatDate(fast.started_at.slice(0, 10))}
                   </span>
                   <div className="flex-1 h-6 bg-neutral-700 rounded-lg overflow-hidden relative">
                     <div
