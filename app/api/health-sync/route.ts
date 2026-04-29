@@ -228,10 +228,17 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  const allMetricNames = isHAE
+    ? (body.data.metrics as HAEMetric[]).map((m: HAEMetric) => m.name)
+    : []
+  const unknownMetrics = allMetricNames.filter((n: string) => !HAE_MAP[n])
+
   return NextResponse.json({
     ok: true,
     format: isHAE ? 'health-auto-export' : 'flat',
     date: payload.date,
     synced: Object.keys(payload).filter(k => !['user_id', 'date', 'updated_at'].includes(k)),
+    debug_all_metrics: allMetricNames,
+    debug_unknown_metrics: unknownMetrics,
   })
 }
