@@ -159,33 +159,46 @@ export default function FastingTimer({ userId }: { userId: string }) {
       })()}
 
       <div className="flex items-center gap-5">
-        {/* SVG Ring */}
+        {/* Liquid fill circle */}
         <div className="flex-shrink-0">
-          <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label={`Progreso de ayuno: ${Math.round(progress * 100)}% de 14 horas`}>
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#404040" strokeWidth="6" />
+          <div
+            className="relative w-[120px] h-[120px] rounded-full overflow-hidden"
+            style={{
+              background: '#111',
+              boxShadow: activeFast
+                ? `0 0 0 3px ${strokeColor}30, 0 0 22px ${strokeColor}18`
+                : '0 0 0 3px #282828',
+            }}
+          >
             {activeFast && (
-              <circle
-                cx="60" cy="60" r="52"
-                fill="none"
-                stroke={strokeColor}
-                strokeWidth="6"
-                strokeLinecap="round"
-                transform="rotate(-90 60 60)"
-                strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={dashOffset}
-                style={{ transition: 'stroke-dashoffset 0.8s linear' }}
+              <div
+                className="liquid-fill"
+                style={{
+                  height: `${Math.max(4, progress * 100)}%`,
+                  background: goalReached
+                    ? 'linear-gradient(to top, #15803d, #22c55e)'
+                    : 'linear-gradient(to top, #b45309, #f59e0b)',
+                }}
               />
             )}
-            <text x="60" y="55" textAnchor="middle" fontSize="11" fill="#a3a3a3" fontFamily="var(--font-mono, monospace)">
-              {activeFast ? formatElapsed(elapsed) : '0:00:00'}
-            </text>
-            <text x="60" y="70" textAnchor="middle" fontSize="18" fontWeight="600" fill={activeFast ? strokeColor : '#737373'}>
-              {Math.round(progress * 100)}%
-            </text>
-            <text x="60" y="84" textAnchor="middle" fontSize="10" fill="#737373">
-              de {GOAL_HOURS}h
-            </text>
-          </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-0.5">
+              <span className="text-[10px] font-mono tabular-nums text-neutral-400">
+                {activeFast ? formatElapsed(elapsed) : '─:──:──'}
+              </span>
+              <span
+                className="text-2xl font-bold tabular-nums leading-none"
+                style={{
+                  color: activeFast ? strokeColor : '#404040',
+                  textShadow: activeFast ? `0 0 14px ${strokeColor}70` : 'none',
+                }}
+              >
+                {Math.round(progress * 100)}%
+              </span>
+              <span className="text-[9px] uppercase tracking-wider text-neutral-600">
+                de {GOAL_HOURS}h
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Info & Controls */}
