@@ -103,27 +103,29 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-y-auto">
         {tab === 'hoy' ? (
           <div className="p-4 space-y-3 pb-16">
-            {/* Readiness — hero widget, only shows when WHOOP data exists */}
+            {/* 1. Readiness */}
             <ReadinessScore userId={userId} date={today} />
 
-            <WhoopConnect userId={userId} />
-            <AppleHealthCard userId={userId} date={today} />
-
-            {/* Row: Fasting + Rainbow */}
+            {/* 2. Ayuno + Arcoíris */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FastingTimer userId={userId} />
               <RainbowTracker userId={userId} date={today} />
             </div>
 
-            {/* Row: WHOOP + Note */}
+            {/* 3. WHOOP + Notas del día */}
+            <WhoopConnect userId={userId} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <WhoopLogger userId={userId} date={today} />
               <DailyNote userId={userId} date={today} />
             </div>
 
+            {/* 4. Apple Health */}
+            <AppleHealthCard userId={userId} date={today} />
+
+            {/* 5. Morning Brief */}
             <MorningBrief userId={userId} />
 
-            {/* Protocol score — gamified daily completion */}
+            {/* Protocol score */}
             <ProtocolScore userId={userId} date={today} />
           </div>
         ) : (
