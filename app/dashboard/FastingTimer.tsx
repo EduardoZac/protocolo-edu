@@ -158,9 +158,9 @@ export default function FastingTimer({ userId }: { userId: string }) {
         )
       })()}
 
-      <div className="flex items-center gap-5">
-        {/* Liquid fill circle + goal badge */}
-        <div className="flex-shrink-0 flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-4">
+        {/* Liquid fill circle */}
+        <div className="flex flex-col items-center gap-2">
           <div
             className="relative w-[120px] h-[120px] rounded-full overflow-hidden"
             style={{
@@ -209,7 +209,7 @@ export default function FastingTimer({ userId }: { userId: string }) {
         </div>
 
         {/* Info & Controls */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full">
           {activeFast ? (
             <>
               <div className="mb-3">
