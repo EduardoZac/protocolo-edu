@@ -159,8 +159,8 @@ export default function FastingTimer({ userId }: { userId: string }) {
       })()}
 
       <div className="flex items-center gap-5">
-        {/* Liquid fill circle */}
-        <div className="flex-shrink-0">
+        {/* Liquid fill circle + goal badge */}
+        <div className="flex-shrink-0 flex flex-col items-center gap-2">
           <div
             className="relative w-[120px] h-[120px] rounded-full overflow-hidden"
             style={{
@@ -199,6 +199,13 @@ export default function FastingTimer({ userId }: { userId: string }) {
               </span>
             </div>
           </div>
+
+          {/* Goal badge below circle */}
+          {goalReached ? (
+            <span className="text-[11px] font-medium text-green-400">✓ Meta alcanzada</span>
+          ) : (
+            <span className="text-[11px] text-neutral-600">Meta: {GOAL_HOURS}h</span>
+          )}
         </div>
 
         {/* Info & Controls */}

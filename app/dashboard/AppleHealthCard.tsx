@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { DailyLog } from '@/lib/types'
 
@@ -56,6 +56,71 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+function Vo2MaxField({ value, onSave }: { value: number | null; onSave: (v: number) => Promise<void> }) {
+  const [editing, setEditing] = useState(false)
+  const [input, setInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function startEdit() {
+    setInput(value != null ? String(value) : '')
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  async function save() {
+    const num = parseFloat(input)
+    if (!isNaN(num) && num > 0) {
+      setSaving(true)
+      await onSave(Math.round(num * 10) / 10)
+      setSaving(false)
+    }
+    setEditing(false)
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') save()
+    if (e.key === 'Escape') setEditing(false)
+  }
+
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-0.5">VO2 max</p>
+      {editing ? (
+        <div className="flex items-center gap-1">
+          <input
+            ref={inputRef}
+            type="number"
+            step="0.1"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onBlur={save}
+            onKeyDown={onKeyDown}
+            className="w-16 bg-neutral-700 border border-amber-500/50 rounded px-1.5 py-0.5 text-sm font-mono text-neutral-100 focus:outline-none focus:border-amber-500"
+          />
+          <span className="text-neutral-500 text-xs">ml/kg</span>
+        </div>
+      ) : (
+        <button
+          onClick={startEdit}
+          className="flex items-baseline gap-1 group"
+          title="Toca para editar"
+        >
+          <span className={`font-mono text-sm ${value != null ? 'text-neutral-100' : 'text-neutral-600'}`}>
+            {saving ? '…' : value != null ? value.toFixed(1) : '—'}
+          </span>
+          {value != null && (
+            <span className="text-neutral-500 text-xs">ml/kg</span>
+          )}
+          <span className="text-[10px] text-neutral-700 group-hover:text-neutral-500 transition-colors ml-0.5">
+            ✎
+          </span>
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function AppleHealthCard({ userId, date }: { userId: string; date: string }) {
   const [log, setLog] = useState<DailyLog | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,9 +139,15 @@ export default function AppleHealthCard({ userId, date }: { userId: string; date
 
   useEffect(() => { load() }, [load])
 
+  async function saveVo2Max(value: number) {
+    await supabase
+      .from('daily_logs')
+      .upsert({ user_id: userId, date, vo2_max: value, updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' })
+    setLog(prev => prev ? { ...prev, vo2_max: value } : prev)
+  }
+
   if (loading) return null
 
-  // Check if there's any Apple Health data at all
   const hasActivity = log?.steps || log?.active_kcal || log?.exercise_min || log?.stand_hours || log?.distance_km || log?.flights_climbed
   const hasBody = log?.weight_kg || log?.body_fat_pct || log?.lean_mass_kg || log?.waist_cm
   const hasMetabolic = log?.glucose_avg || log?.glucose_max
@@ -94,7 +165,8 @@ export default function AppleHealthCard({ userId, date }: { userId: string; date
     )
   }
 
-  const fmt = (v: number | null | undefined, decimals = 0) => v == null ? '—' : decimals === 0 ? `${Math.round(v)}` : `${v.toFixed(decimals)}`
+  const fmt = (v: number | null | undefined, decimals = 0) =>
+    v == null ? '—' : decimals === 0 ? `${Math.round(v)}` : `${v.toFixed(decimals)}`
 
   return (
     <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-5 space-y-5">
@@ -111,14 +183,14 @@ export default function AppleHealthCard({ userId, date }: { userId: string; date
         </Section>
       )}
 
-      {hasCardio && (
+      {(hasCardio || true) && (
         <Section title="Cardiovascular">
           <Metric
             label="Presión"
             value={log?.bp_systolic && log?.bp_diastolic ? `${log.bp_systolic}/${log.bp_diastolic}` : '—'}
             className={bpColor(log?.bp_systolic ?? null, log?.bp_diastolic ?? null)}
           />
-          <Metric label="VO2 max" value={fmt(log?.vo2_max, 1)} unit="ml/kg" />
+          <Vo2MaxField value={log?.vo2_max ?? null} onSave={saveVo2Max} />
           <Metric label="RHR" value={fmt(log?.resting_hr)} unit="bpm" />
         </Section>
       )}
