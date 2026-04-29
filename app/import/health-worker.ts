@@ -3,6 +3,7 @@ const WANTED_TYPES = [
   'HKQuantityTypeIdentifierRestingHeartRate',
   'HKQuantityTypeIdentifierStepCount',
   'HKCategoryTypeIdentifierSleepAnalysis',
+  'HKQuantityTypeIdentifierVO2Max',
 ]
 
 const SLEEP_ASLEEP = new Set([
@@ -20,7 +21,7 @@ function attr(tag: string, name: string): string {
   return end === -1 ? '' : tag.slice(start, end)
 }
 
-type Acc = Record<string, { hrv: number[]; resting_hr: number[]; steps: number; sleepMs: number }>
+type Acc = Record<string, { hrv: number[]; resting_hr: number[]; steps: number; sleepMs: number; vo2max: number[] }>
 
 function processChunk(text: string, cutoffStr: string, acc: Acc) {
   let i = 0
@@ -44,7 +45,7 @@ function processChunk(text: string, cutoffStr: string, acc: Acc) {
     const date = startDate.slice(0, 10)
     if (date < cutoffStr) continue
 
-    if (!acc[date]) acc[date] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
+    if (!acc[date]) acc[date] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0, vo2max: [] }
     const d = acc[date]
 
     if (type === 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN') {
@@ -53,12 +54,14 @@ function processChunk(text: string, cutoffStr: string, acc: Acc) {
       d.resting_hr.push(parseFloat(attr(tag, 'value')))
     } else if (type === 'HKQuantityTypeIdentifierStepCount') {
       d.steps += parseFloat(attr(tag, 'value'))
+    } else if (type === 'HKQuantityTypeIdentifierVO2Max') {
+      d.vo2max.push(parseFloat(attr(tag, 'value')))
     } else if (type === 'HKCategoryTypeIdentifierSleepAnalysis') {
       if (SLEEP_ASLEEP.has(attr(tag, 'value'))) {
         const endDate = attr(tag, 'endDate')
         const ms = new Date(endDate).getTime() - new Date(startDate).getTime()
         const wakeDate = endDate.slice(0, 10)
-        if (!acc[wakeDate]) acc[wakeDate] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0 }
+        if (!acc[wakeDate]) acc[wakeDate] = { hrv: [], resting_hr: [], steps: 0, sleepMs: 0, vo2max: [] }
         acc[wakeDate].sleepMs += ms
       }
     }
@@ -74,8 +77,9 @@ function buildResult(acc: Acc) {
       steps: d.steps > 0 ? Math.round(d.steps) : null,
       sleep_hours: d.sleepMs > 0 ? Math.round(d.sleepMs / 360000) / 10 : null,
       sleep_performance: d.sleepMs > 0 ? Math.min(Math.round((d.sleepMs / 3600000 / 8) * 100), 100) : null,
+      vo2_max: d.vo2max.length > 0 ? Math.round(d.vo2max[d.vo2max.length - 1] * 10) / 10 : null,
     }))
-    .filter(d => d.hrv || d.resting_hr || d.steps || d.sleep_hours)
+    .filter(d => d.hrv || d.resting_hr || d.steps || d.sleep_hours || d.vo2_max)
     .sort((a, b) => b.date.localeCompare(a.date))
 }
 

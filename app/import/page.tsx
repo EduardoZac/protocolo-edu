@@ -11,6 +11,7 @@ interface DayData {
   steps: number | null
   sleep_hours: number | null
   sleep_performance: number | null
+  vo2_max: number | null
 }
 
 
@@ -89,6 +90,7 @@ export default function ImportPage() {
       if (day.resting_hr !== null) payload.resting_hr = day.resting_hr
       if (day.steps !== null) payload.steps = day.steps
       if (day.sleep_performance !== null) payload.sleep_performance = day.sleep_performance
+      if (day.vo2_max !== null) payload.vo2_max = day.vo2_max
 
       await supabase
         .from('daily_logs')
@@ -193,6 +195,7 @@ export default function ImportPage() {
                   {d.resting_hr && <span className="text-purple-400">FC {d.resting_hr}bpm</span>}
                   {d.sleep_hours && <span className="text-indigo-400">Sueño {d.sleep_hours}h</span>}
                   {d.steps && <span className="text-green-400">{d.steps.toLocaleString()} pasos</span>}
+                  {d.vo2_max && <span className="text-teal-400">VO₂max {d.vo2_max}</span>}
                 </div>
               </div>
             ))}
