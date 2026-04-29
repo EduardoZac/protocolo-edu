@@ -44,7 +44,10 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
 
   const count = activeColors.length
   const allDone = count === 7
-  const focusedColor = RAINBOW_COLORS.find(c => c.id === focused)
+  const focusedIndex = RAINBOW_COLORS.findIndex(c => c.id === focused)
+  const focusedColor = focusedIndex >= 0 ? RAINBOW_COLORS[focusedIndex] : null
+  // Center of each circle: (i + 0.5) / 7 of the total width
+  const arrowLeft = focusedIndex >= 0 ? `calc(${((focusedIndex + 0.5) / 7) * 100}% - 6px)` : '0'
 
   return (
     <div
@@ -105,25 +108,37 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         })}
       </div>
 
-      {/* Info panel — shows on tap */}
+      {/* Info panel with arrow pointing at the tapped circle */}
       <div
         className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: focusedColor ? '72px' : '0px', opacity: focusedColor ? 1 : 0 }}
+        style={{ maxHeight: focusedColor ? '90px' : '0px', opacity: focusedColor ? 1 : 0 }}
       >
         {focusedColor && (
-          <div
-            className="rounded-xl px-3 py-2.5 mb-3"
-            style={{
-              backgroundColor: focusedColor.hex + '14',
-              border: `1px solid ${focusedColor.hex}30`,
-            }}
-          >
-            <p className="text-xs font-medium mb-0.5" style={{ color: focusedColor.hex }}>
-              {focusedColor.tip}
-            </p>
-            <p className="text-[11px] text-neutral-400 leading-snug">
-              {focusedColor.benefit}
-            </p>
+          <div className="relative mb-3">
+            {/* Triangle arrow */}
+            <div
+              className="absolute -top-1.5 w-3 h-3 rotate-45 transition-all duration-200"
+              style={{
+                left: arrowLeft,
+                backgroundColor: focusedColor.hex + '20',
+                borderTop: `1px solid ${focusedColor.hex}35`,
+                borderLeft: `1px solid ${focusedColor.hex}35`,
+              }}
+            />
+            <div
+              className="rounded-xl px-3 py-2.5"
+              style={{
+                backgroundColor: focusedColor.hex + '14',
+                border: `1px solid ${focusedColor.hex}30`,
+              }}
+            >
+              <p className="text-xs font-medium mb-0.5" style={{ color: focusedColor.hex }}>
+                {focusedColor.tip}
+              </p>
+              <p className="text-[11px] text-neutral-400 leading-snug">
+                {focusedColor.benefit}
+              </p>
+            </div>
           </div>
         )}
       </div>
