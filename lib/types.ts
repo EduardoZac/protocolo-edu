@@ -64,13 +64,13 @@ export interface DailyLog {
 }
 
 export const RAINBOW_COLORS = [
-  { id: 'rojo',      label: 'Rojo',       hex: '#ef4444', tip: 'jitomate, fresa, pimiento' },
-  { id: 'naranja',   label: 'Naranja',    hex: '#f97316', tip: 'zanahoria, naranja, mango' },
-  { id: 'amarillo',  label: 'Amarillo',   hex: '#eab308', tip: 'limón, maíz, piña' },
-  { id: 'verde',     label: 'Verde',      hex: '#22c55e', tip: 'espinaca, pepino, aguacate' },
-  { id: 'crucifero', label: 'Crucífero',  hex: '#16a34a', tip: 'brócoli, col, kale' },
-  { id: 'morado',    label: 'Morado',     hex: '#8b5cf6', tip: 'arándano, berenjena, uva' },
-  { id: 'blanco',    label: 'Blanco',     hex: '#a3a3a3', tip: 'ajo, cebolla, nueces' },
+  { id: 'rojo',      label: 'Rojo',       hex: '#ef4444', tip: 'jitomate, fresa, pimiento', benefit: 'Licopeno · protege contra el daño celular y el cáncer' },
+  { id: 'naranja',   label: 'Naranja',    hex: '#f97316', tip: 'zanahoria, naranja, mango', benefit: 'Betacaroteno · salud visual, inmune y de piel' },
+  { id: 'amarillo',  label: 'Amarillo',   hex: '#eab308', tip: 'limón, maíz, piña',         benefit: 'Vitamina C · colágeno, inmunidad y absorción de hierro' },
+  { id: 'verde',     label: 'Verde',      hex: '#22c55e', tip: 'espinaca, pepino, aguacate', benefit: 'Clorofila y folato · desintoxicación y energía celular' },
+  { id: 'crucifero', label: 'Crucífero',  hex: '#16a34a', tip: 'brócoli, col, kale',         benefit: 'Sulforafano · activa genes antiinflamatorios y detox' },
+  { id: 'morado',    label: 'Morado',     hex: '#8b5cf6', tip: 'arándano, berenjena, uva',   benefit: 'Antocianinas · salud cardiovascular y función cerebral' },
+  { id: 'blanco',    label: 'Blanco',     hex: '#a3a3a3', tip: 'ajo, cebolla, nueces',       benefit: 'Alicina y quercetina · antibacteriano y antiinflamatorio' },
 ] as const
 
 export type ColorId = typeof RAINBOW_COLORS[number]['id']

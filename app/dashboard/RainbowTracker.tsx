@@ -7,6 +7,7 @@ import { RAINBOW_COLORS } from '@/lib/types'
 export default function RainbowTracker({ userId, date }: { userId: string; date: string }) {
   const [activeColors, setActiveColors] = useState<string[]>([])
   const [justToggled, setJustToggled] = useState<string | null>(null)
+  const [focused, setFocused] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -29,6 +30,8 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
       : [...activeColors, colorId]
 
     setActiveColors(next)
+    setFocused(colorId)
+
     if (!activeColors.includes(colorId)) {
       setJustToggled(colorId)
       setTimeout(() => setJustToggled(null), 350)
@@ -41,6 +44,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
 
   const count = activeColors.length
   const allDone = count === 7
+  const focusedColor = RAINBOW_COLORS.find(c => c.id === focused)
 
   return (
     <div
@@ -53,6 +57,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         boxShadow: allDone ? '0 0 24px #f59e0b10' : 'none',
       }}
     >
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-[10px] uppercase tracking-widest text-neutral-500">Arcoíris</p>
         <span
@@ -63,24 +68,27 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         </span>
       </div>
 
+      {/* Color circles */}
       <div className="grid grid-cols-7 gap-1 mb-4">
         {RAINBOW_COLORS.map(color => {
           const active = activeColors.includes(color.id)
           const popping = justToggled === color.id
+          const isFocused = focused === color.id
           return (
             <button
               key={color.id}
               onClick={() => toggleColor(color.id)}
               disabled={loading}
-              title={color.tip}
               className="flex flex-col items-center gap-1.5 min-h-[52px] justify-center"
             >
               <div
-                className={`w-9 h-9 rounded-full transition-all duration-200 ${popping ? 'dot-active' : ''} ${!active ? 'hover:scale-110 active:scale-90' : 'hover:scale-105 active:scale-90'}`}
+                className={`w-9 h-9 rounded-full transition-all duration-200 ${popping ? 'dot-active' : ''}`}
                 style={{
                   backgroundColor: color.hex,
                   opacity: active ? 1 : 0.22,
-                  boxShadow: active
+                  boxShadow: isFocused
+                    ? `0 0 0 2px ${color.hex}, 0 0 16px ${color.hex}60`
+                    : active
                     ? `0 0 12px ${color.hex}60, 0 0 4px ${color.hex}40`
                     : 'none',
                   transform: active && !popping ? 'scale(1.12)' : undefined,
@@ -97,6 +105,29 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         })}
       </div>
 
+      {/* Info panel — shows on tap */}
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: focusedColor ? '72px' : '0px', opacity: focusedColor ? 1 : 0 }}
+      >
+        {focusedColor && (
+          <div
+            className="rounded-xl px-3 py-2.5 mb-3"
+            style={{
+              backgroundColor: focusedColor.hex + '14',
+              border: `1px solid ${focusedColor.hex}30`,
+            }}
+          >
+            <p className="text-xs font-medium mb-0.5" style={{ color: focusedColor.hex }}>
+              {focusedColor.tip}
+            </p>
+            <p className="text-[11px] text-neutral-400 leading-snug">
+              {focusedColor.benefit}
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Multicolor progress bar */}
       <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden flex gap-px">
         {RAINBOW_COLORS.map((color, i) => (
@@ -105,7 +136,6 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
             className="flex-1 rounded-full transition-all duration-400"
             style={{
               background: activeColors.includes(color.id) ? color.hex : '#2a2a2a',
-              opacity: activeColors.includes(color.id) ? 1 : 1,
               transitionDelay: `${i * 30}ms`,
             }}
           />
