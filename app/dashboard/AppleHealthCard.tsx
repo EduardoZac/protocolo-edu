@@ -185,11 +185,6 @@ export default function AppleHealthCard({ userId, date }: { userId: string; date
 
       {(hasCardio || true) && (
         <Section title="Cardiovascular">
-          <Metric
-            label="Presión"
-            value={log?.bp_systolic && log?.bp_diastolic ? `${log.bp_systolic}/${log.bp_diastolic}` : '—'}
-            className={bpColor(log?.bp_systolic ?? null, log?.bp_diastolic ?? null)}
-          />
           <Vo2MaxField value={log?.vo2_max ?? null} onSave={saveVo2Max} />
           <Metric label="RHR" value={fmt(log?.resting_hr)} unit="bpm" />
         </Section>
@@ -218,8 +213,6 @@ export default function AppleHealthCard({ userId, date }: { userId: string; date
         <Section title="Composición">
           <Metric label="Peso" value={fmt(log?.weight_kg, 1)} unit="kg" />
           <Metric label="% grasa" value={fmt(log?.body_fat_pct, 1)} unit="%" />
-          <Metric label="Masa magra" value={fmt(log?.lean_mass_kg, 1)} unit="kg" />
-          <Metric label="Cintura" value={fmt(log?.waist_cm, 1)} unit="cm" />
         </Section>
       )}
 
