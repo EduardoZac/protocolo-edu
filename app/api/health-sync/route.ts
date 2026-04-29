@@ -49,6 +49,7 @@ const EPISODIC_METRICS = new Set([
   'lean_body_mass',
   'waist_circumference',
   'vo2_max',
+  'cardio_fitness',
   'blood_pressure',
 ])
 
@@ -68,6 +69,7 @@ const HAE_MAP: Record<string, (m: HAEMetric, units: string) => Record<string, nu
   lean_body_mass: (m, u) => ({ lean_mass_kg: kgFrom(latestQty(m), u) }),
   waist_circumference: (m, u) => ({ waist_cm: cmFrom(latestQty(m), u) }),
   vo2_max: (m) => ({ vo2_max: latestQty(m) }),
+  cardio_fitness: (m) => ({ vo2_max: latestQty(m) }),
   blood_glucose: (m, u) => {
     const vals = m.data.map(d => d.qty).filter((v): v is number => v != null).map(v => mgdlFrom(v, u)!)
     if (!vals.length) return {}
