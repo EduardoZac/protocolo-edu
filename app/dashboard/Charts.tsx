@@ -151,7 +151,7 @@ export default function Charts({ logs, fasts }: Props) {
                   <YAxis {...AXIS_PROPS} tickFormatter={v => `${v}k`} />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
-                    formatter={(v: number) => [`${v.toFixed(1)}k pasos`, '']}
+                    formatter={(v: unknown) => [`${Number(v).toFixed(1)}k pasos`, '']}
                     labelStyle={{ color: '#a3a3a3' }}
                   />
                   <ReferenceLine y={8} stroke="#22c55e" strokeDasharray="3 3" strokeOpacity={0.5} label={{ value: '8k', position: 'right', fill: '#22c55e', fontSize: 9 }} />
