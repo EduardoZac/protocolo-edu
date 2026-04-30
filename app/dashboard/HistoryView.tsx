@@ -6,6 +6,7 @@ import { recoveryColor, hrvColor } from '@/lib/types'
 import type { Fast, DailyLog } from '@/lib/types'
 import Charts from './Charts'
 import WeeklySummary from './WeeklySummary'
+import DailyTable from './DailyTable'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
@@ -109,11 +110,16 @@ export default function HistoryView({ userId }: { userId: string }) {
         ))}
       </div>
 
+      {/* Daily table — all metrics at a glance */}
+      <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-4">
+        <DailyTable logs={logs} fasts={fasts} days={14} />
+      </div>
+
+      {/* Charts by category */}
+      <Charts logs={logs} fasts={fasts} />
+
       {/* AI Weekly Summary */}
       <WeeklySummary userId={userId} />
-
-      {/* Charts */}
-      <Charts logs={logs} fasts={fasts} />
 
       {/* Fasting bars */}
       <div>
