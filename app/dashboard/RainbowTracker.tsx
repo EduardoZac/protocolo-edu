@@ -7,7 +7,6 @@ import { RAINBOW_COLORS } from '@/lib/types'
 export default function RainbowTracker({ userId, date }: { userId: string; date: string }) {
   const [activeColors, setActiveColors] = useState<string[]>([])
   const [justToggled, setJustToggled] = useState<string | null>(null)
-  const [focused, setFocused] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -30,7 +29,6 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
       : [...activeColors, colorId]
 
     setActiveColors(next)
-    setFocused(colorId)
 
     if (!activeColors.includes(colorId)) {
       setJustToggled(colorId)
@@ -44,10 +42,6 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
 
   const count = activeColors.length
   const allDone = count === 7
-  const focusedIndex = RAINBOW_COLORS.findIndex(c => c.id === focused)
-  const focusedColor = focusedIndex >= 0 ? RAINBOW_COLORS[focusedIndex] : null
-  // Center of each circle: (i + 0.5) / 7 of the total width
-  const arrowLeft = focusedIndex >= 0 ? `calc(${((focusedIndex + 0.5) / 7) * 100}% - 6px)` : '0'
 
   return (
     <div
@@ -76,7 +70,6 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         {RAINBOW_COLORS.map(color => {
           const active = activeColors.includes(color.id)
           const popping = justToggled === color.id
-          const isFocused = focused === color.id
           return (
             <button
               key={color.id}
@@ -89,11 +82,7 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
                 style={{
                   backgroundColor: color.hex,
                   opacity: active ? 1 : 0.22,
-                  boxShadow: isFocused
-                    ? `0 0 0 2px ${color.hex}, 0 0 16px ${color.hex}60`
-                    : active
-                    ? `0 0 12px ${color.hex}60, 0 0 4px ${color.hex}40`
-                    : 'none',
+                  boxShadow: active ? `0 0 12px ${color.hex}60, 0 0 4px ${color.hex}40` : 'none',
                   transform: active && !popping ? 'scale(1.12)' : undefined,
                 }}
               />
@@ -108,40 +97,31 @@ export default function RainbowTracker({ userId, date }: { userId: string; date:
         })}
       </div>
 
-      {/* Info panel with arrow pointing at the tapped circle */}
-      <div
-        className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: focusedColor ? '90px' : '0px', opacity: focusedColor ? 1 : 0 }}
-      >
-        {focusedColor && (
-          <div className="relative mb-3">
-            {/* Triangle arrow */}
+      {/* One info row per active color */}
+      {activeColors.length > 0 && (
+        <div className="flex flex-col gap-1.5 mb-4">
+          {RAINBOW_COLORS.filter(c => activeColors.includes(c.id)).map(color => (
             <div
-              className="absolute -top-1.5 w-3 h-3 rotate-45 transition-all duration-200"
-              style={{
-                left: arrowLeft,
-                backgroundColor: focusedColor.hex + '20',
-                borderTop: `1px solid ${focusedColor.hex}35`,
-                borderLeft: `1px solid ${focusedColor.hex}35`,
-              }}
-            />
-            <div
-              className="rounded-xl px-3 py-2.5"
-              style={{
-                backgroundColor: focusedColor.hex + '14',
-                border: `1px solid ${focusedColor.hex}30`,
-              }}
+              key={color.id}
+              className="flex items-start gap-2 rounded-lg px-2.5 py-2"
+              style={{ backgroundColor: color.hex + '12', border: `1px solid ${color.hex}25` }}
             >
-              <p className="text-xs font-medium mb-0.5" style={{ color: focusedColor.hex }}>
-                {focusedColor.tip}
-              </p>
-              <p className="text-[11px] text-neutral-400 leading-snug">
-                {focusedColor.benefit}
-              </p>
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
+                style={{ backgroundColor: color.hex }}
+              />
+              <div className="min-w-0">
+                <span className="text-[11px] font-medium" style={{ color: color.hex }}>
+                  {color.tip}
+                </span>
+                <span className="text-[10px] text-neutral-500 ml-1.5">
+                  {color.benefit.split('·')[0].trim()}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Multicolor progress bar */}
       <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden flex gap-px">
