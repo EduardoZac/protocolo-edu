@@ -12,12 +12,12 @@ function admin() {
 }
 
 async function resolveUserId(req: NextRequest): Promise<string | null> {
-  // Cron path: shared secret → use single owner user
+  // Cron path: shared secret → use the connected WHOOP account
   const secret = req.headers.get('x-sync-secret')
   if (secret && secret === process.env.HEALTH_SYNC_SECRET) {
     const supabase = admin()
-    const { data } = await supabase.auth.admin.listUsers()
-    return data?.users?.[0]?.id ?? null
+    const { data } = await supabase.from('whoop_tokens').select('user_id').limit(1).maybeSingle()
+    return data?.user_id ?? null
   }
   // Manual path: fall through; caller must pass userId in body
   return null

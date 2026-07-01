@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
 
   if (isCron) {
     const supabase = admin()
-    const { data } = await supabase.auth.admin.listUsers()
-    userId = data?.users?.[0]?.id ?? null
+    const { data } = await supabase.from('whoop_tokens').select('user_id').limit(1).maybeSingle()
+    userId = data?.user_id ?? null
   } else {
     const body = await req.json().catch(() => ({}))
     userId = body.userId ?? null
