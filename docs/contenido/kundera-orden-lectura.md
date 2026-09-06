@@ -113,30 +113,41 @@ Antes de los libros, los conceptos. Kundera repite seis obsesiones en toda su ob
 
 ---
 
-## Parte 4 — Ruta recomendada y qué producir
+## Parte 4 — La serie
+
+### Nombre
+
+# Una vez es ninguna vez
+
+**Subtítulo fijo en cada pieza:** *Leyendo a Kundera*
+
+Viene del proverbio checo que Kundera usa en *La insoportable levedad del ser*: *Einmal ist keinmal* — lo que ocurre una sola vez es como si no hubiera ocurrido. Explicar el título ya es contenido: sirve de apertura del episodio 1 y de pieza suelta para redes.
+
+**Uso:** el nombre va solo en portada y miniatura. El subtítulo *Leyendo a Kundera* va en el título SEO, el slug y el copy de cada pieza — resuelve la búsqueda, que el nombre por sí solo no captura.
+
+### Episodios
+
+| # | Título | Libro | Concepto | Formato |
+|---|---|---|---|---|
+| 1 | La risa y el archivo borrado | El libro de la risa y el olvido | Grafomanía / borrado del archivo | Video ancla — redes descritas en 1979 |
+| 2 | Nadie te dijo que la libertad pesaba | La insoportable levedad del ser | Kitsch, levedad/peso | Post ancla de la serie |
+| 3 | El gesto no era tuyo | La inmortalidad | Imagología / el gesto | Video — marca personal antes de la marca personal |
+| — | *Interludio: para qué sirve una novela* | El arte de la novela | Suspensión del juicio moral | Post breve |
+| 4 | Correr para no recordar | La lentitud | El bailarín | Video corto, alto potencial viral |
+| 5 | Quién eres cuando nadie te mira | La identidad | Validación externa | Post breve |
+| 6 | El regreso no existe | La ignorancia | Nostalgia como dolor del no-regreso | Post |
+| 7 | La edad en que todo se siente verdad | La vida está en otra parte | La edad lírica | Post contraintuitivo sobre la sinceridad |
+| 8 | El chiste que te costó la vida | La broma | Ironía vs. poder literal | Video de cierre — cultura de captura de pantalla |
 
 ### Ruta de lectura
 
-El libro de la risa y el olvido → La insoportable levedad del ser → La inmortalidad → El arte de la novela → La lentitud → La identidad → La ignorancia
+El mismo orden de los episodios: El libro de la risa y el olvido → La insoportable levedad del ser → La inmortalidad → El arte de la novela → La lentitud → La identidad → La ignorancia → La vida está en otra parte → La broma.
 
 **Hilo conductor:** memoria → identidad → libertad → ego → relaciones → tiempo → olvido.
 
-*La broma* y *La vida está en otra parte* van al final: son excelentes, pero más ancladas al contexto checo y menos rentables como puerta de entrada.
+*La broma* y *La vida está en otra parte* cierran en vez de abrir: son excelentes, pero más ancladas al contexto checo y menos rentables como puerta de entrada.
 
-### Mapa de contenido
-
-| Libro | Concepto exportable | Formato |
-|---|---|---|
-| El libro de la risa y el olvido | Grafomanía / borrado del archivo | Video — redes descritas en 1979 |
-| La insoportable levedad del ser | Kitsch | Post ancla de la serie |
-| La inmortalidad | Imagología / el gesto | Video — marca personal antes de la marca personal |
-| La lentitud | El bailarín | Video corto, alto potencial viral |
-| La identidad | Validación externa | Post breve |
-| La ignorancia | Nostalgia como dolor del no-regreso | Post de cierre |
-| La vida está en otra parte | La edad lírica | Post contraintuitivo sobre la sinceridad |
-| La broma | Ironía vs. poder literal | Video sobre cultura de captura de pantalla |
-
-### Gancho de serie
+### Pregunta de la serie
 
 Kundera responde una sola pregunta desde ocho ángulos: **¿quién eres cuando lo que recuerdas, lo que olvidas y lo que otros recuerdan de ti no coinciden?**
 
