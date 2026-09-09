@@ -55,13 +55,39 @@
       .accent { color: #f2d27a; font-style: italic; }
       .beat { position: absolute; left: 0; width: 900px; }
 
-      #mark {
-        top: 1700px;
+      /* --- marca --- */
+      #watermark {
+        top: 150px;
         font-family: Inter, system-ui, sans-serif;
-        font-size: 30px;
-        letter-spacing: 11px;
+        font-size: 26px;
+        letter-spacing: 9px;
         text-transform: uppercase;
         color: #c9a227;
+      }
+      #endcard { top: 1672px; }
+      #ecRule {
+        display: block;
+        width: 130px;
+        height: 1px;
+        margin: 0 auto 40px;
+        background: #c9a227;
+        transform-origin: 50% 50%;
+      }
+      #ecMark {
+        display: block;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 44px;
+        letter-spacing: 10px;
+        text-transform: uppercase;
+        color: #e0b845;
+      }
+      #ecUrl {
+        display: block;
+        margin-top: 26px;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 26px;
+        letter-spacing: 5px;
+        color: rgba(246, 242, 232, 0.55);
       }
       .vignette {
         position: absolute; inset: 0; z-index: 5; pointer-events: none;
@@ -74,7 +100,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="27"
+      data-duration="28.5"
       data-width="1080"
       data-height="1920"
     >
@@ -114,7 +140,14 @@
         </div>
       </div>
 
-      <div id="mark" class="stage">FiloBlogía</div>
+      <div id="watermark" class="stage">Filo.Blogía</div>
+
+      <div id="endcard" class="stage">
+        <span id="ecRule"></span>
+        <span id="ecMark">Filo.Blogía</span>
+        <span id="ecUrl">eduardozacarias.com</span>
+      </div>
+
       <div class="vignette"></div>
     </div>
 
@@ -135,7 +168,11 @@
       gsap.set("#bFar", { autoAlpha: 0, scale: 0.62 });
       gsap.set("#bNear", { autoAlpha: 0, scale: 0.62 });
       gsap.set("#bCore", { autoAlpha: 0, scale: 0.62 });
-      gsap.set(["#b1", "#b2", "#b3", "#b4", "#b5", "#b6", "#mark"], { autoAlpha: 0 });
+      gsap.set(["#b1", "#b2", "#b3", "#b4", "#b5", "#b6"], { autoAlpha: 0 });
+      gsap.set("#watermark", { autoAlpha: 0 });
+      gsap.set("#endcard", { autoAlpha: 0 });
+      gsap.set(["#ecRule", "#ecMark", "#ecUrl"], { autoAlpha: 0 });
+      gsap.set("#ecRule", { scaleX: 0 });
 
       // Helper: un grupo de texto entra escalonado y sale como bloque.
       function beat(sel, items, tIn, tOut) {
@@ -200,8 +237,18 @@
       tl.to("#room", { autoAlpha: 0.72, duration: 1.0, ease: "power2.out" }, 22.4);
       tl.to("#floor", { autoAlpha: 0.72, duration: 1.0, ease: "power2.out" }, 22.4);
 
-      beat("#b6", ["#b6a", "#b6b"], 22.9, 26.1);
-      tl.fromTo("#mark", { y: 26, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 24.4);
+      // El cierre no sale: sostiene hasta el final junto a la marca.
+      tl.set("#b6", { autoAlpha: 1 }, 22.9);
+      tl.fromTo("#b6a", { y: 54, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" }, 22.9);
+      tl.fromTo("#b6b", { y: 54, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" }, 23.06);
+
+      // ---------- Marca ----------
+      tl.fromTo("#watermark", { autoAlpha: 0 }, { autoAlpha: 0.5, duration: 0.9, ease: "power2.out" }, 1.9);
+
+      tl.set("#endcard", { autoAlpha: 1 }, 24.9);
+      tl.fromTo("#ecRule", { scaleX: 0, autoAlpha: 0 }, { scaleX: 1, autoAlpha: 0.8, duration: 0.7, ease: "power3.out" }, 24.9);
+      tl.fromTo("#ecMark", { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 25.15);
+      tl.fromTo("#ecUrl", { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 25.4);
 
       window.__timelines["main"] = tl;
     </script>
