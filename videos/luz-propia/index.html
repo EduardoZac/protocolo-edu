@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Luz propia — FiloBlogía</title>
+    <script src="./vendor/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      body { font-family: Georgia, "Times New Roman", serif; }
+
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #06070a; }
+
+      /* --- la habitación: luz total de la escena --- */
+      #room {
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 50% 40%, #2a2418 0%, #14130f 38%, #06070a 72%);
+      }
+      #floor {
+        position: absolute; left: 0; right: 0; top: 1180px; height: 740px;
+        background: linear-gradient(180deg, rgba(201,162,39,0.10) 0%, rgba(6,7,10,0) 62%);
+      }
+
+      /* --- lámparas --- */
+      .lamp { position: absolute; left: 540px; top: 760px; width: 0; height: 0; }
+      .aura, .core {
+        position: absolute; left: 50%; top: 50%;
+        transform-origin: 50% 50%;
+        border-radius: 50%;
+      }
+      .aura { width: 1100px; height: 1100px; margin: -550px 0 0 -550px; }
+      .aura-far  { background: radial-gradient(circle, rgba(201,162,39,0.30) 0%, rgba(201,162,39,0.10) 34%, rgba(201,162,39,0) 66%); }
+      .aura-near { width: 560px; height: 560px; margin: -280px 0 0 -280px;
+                   background: radial-gradient(circle, rgba(242,210,122,0.66) 0%, rgba(242,210,122,0.20) 44%, rgba(242,210,122,0) 72%); }
+      .core {
+        width: 132px; height: 132px; margin: -66px 0 0 -66px;
+        background: radial-gradient(circle, #fffaf0 0%, #f6dd9e 40%, #d8a93a 78%, #b0851f 100%);
+      }
+
+      #lampA { z-index: 3; }
+      #lampB { z-index: 2; }
+
+      /* --- tipografía --- */
+      .stage { position: absolute; left: 90px; width: 900px; text-align: center; }
+      #copy { top: 1320px; }
+      .line {
+        display: block;
+        color: #f6f2e8;
+        font-size: 84px;
+        line-height: 1.18;
+        letter-spacing: -0.5px;
+      }
+      .line.sm { font-size: 70px; }
+      .accent { color: #f2d27a; font-style: italic; }
+      .beat { position: absolute; left: 0; width: 900px; }
+
+      #mark {
+        top: 1700px;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 30px;
+        letter-spacing: 11px;
+        text-transform: uppercase;
+        color: #c9a227;
+      }
+      .vignette {
+        position: absolute; inset: 0; z-index: 5; pointer-events: none;
+        background: radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.55) 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="27"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="room"></div>
+      <div id="floor"></div>
+
+      <div id="lampB" class="lamp">
+        <div id="bFar" class="aura aura-far"></div>
+        <div id="bNear" class="aura aura-near"></div>
+        <div id="bCore" class="core"></div>
+      </div>
+
+      <div id="lampA" class="lamp">
+        <div id="aFar" class="aura aura-far"></div>
+        <div id="aNear" class="aura aura-near"></div>
+        <div id="aCore" class="core"></div>
+      </div>
+
+      <div id="copy" class="stage">
+        <div id="b1" class="beat"><span id="b1a" class="line">Tienes luz propia.</span></div>
+        <div id="b2" class="beat"><span id="b2a" class="line">Nadie te la encendió.</span></div>
+        <div id="b3" class="beat">
+          <span id="b3a" class="line sm">Crece cada vez</span>
+          <span id="b3b" class="line sm accent">que te eliges.</span>
+        </div>
+        <div id="b4" class="beat">
+          <span id="b4a" class="line sm">Llega otra luz.</span>
+          <span id="b4b" class="line sm accent">La habitación se ilumina más.</span>
+        </div>
+        <div id="b5" class="beat">
+          <span id="b5a" class="line sm">Se va.</span>
+          <span id="b5b" class="line sm accent">La tuya sigue igual.</span>
+        </div>
+        <div id="b6" class="beat">
+          <span id="b6a" class="line sm">Amor propio es brillar</span>
+          <span id="b6b" class="line sm accent">sin pedir permiso.</span>
+        </div>
+      </div>
+
+      <div id="mark" class="stage">FiloBlogía</div>
+      <div class="vignette"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      const ENTER = { duration: 0.7, ease: "power3.out" };
+      const EXIT = { duration: 0.52, ease: "power2.in" };
+
+      // Estado inicial: cuarto oscuro, lámparas apagadas, texto fuera.
+      // Inmediato (fuera de la timeline) para que el frame 0 ya salga correcto.
+      gsap.set("#room", { autoAlpha: 0 });
+      gsap.set("#floor", { autoAlpha: 0 });
+      gsap.set("#aFar", { autoAlpha: 0, scale: 0.35 });
+      gsap.set("#aNear", { autoAlpha: 0, scale: 0.35 });
+      gsap.set("#aCore", { autoAlpha: 0, scale: 0.2 });
+      gsap.set("#lampB", { x: 780, y: 55 });
+      gsap.set("#bFar", { autoAlpha: 0, scale: 0.62 });
+      gsap.set("#bNear", { autoAlpha: 0, scale: 0.62 });
+      gsap.set("#bCore", { autoAlpha: 0, scale: 0.62 });
+      gsap.set(["#b1", "#b2", "#b3", "#b4", "#b5", "#b6", "#mark"], { autoAlpha: 0 });
+
+      // Helper: un grupo de texto entra escalonado y sale como bloque.
+      function beat(sel, items, tIn, tOut) {
+        tl.set(sel, { autoAlpha: 1 }, tIn);
+        items.forEach(function (id, i) {
+          tl.fromTo(id, { y: 54, autoAlpha: 0 }, Object.assign({ y: 0, autoAlpha: 1 }, ENTER), tIn + i * 0.16);
+        });
+        tl.to(items, Object.assign({ y: -34, autoAlpha: 0 }, EXIT), tOut);
+        tl.set(sel, { autoAlpha: 0 }, tOut + EXIT.duration);
+      }
+
+      // ---------- 1. Encender ----------
+      tl.fromTo("#aCore", { scale: 0.2, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0.3);
+      tl.fromTo("#aNear", { scale: 0.35, autoAlpha: 0 }, { scale: 0.72, autoAlpha: 0.75, duration: 1.1, ease: "power3.out" }, 0.55);
+      tl.fromTo("#aFar", { scale: 0.35, autoAlpha: 0 }, { scale: 0.62, autoAlpha: 0.6, duration: 1.3, ease: "power3.out" }, 0.7);
+      tl.fromTo("#room", { autoAlpha: 0 }, { autoAlpha: 0.34, duration: 1.0, ease: "power2.out" }, 1.2);
+      tl.fromTo("#floor", { autoAlpha: 0 }, { autoAlpha: 0.5, duration: 1.0, ease: "power2.out" }, 1.3);
+
+      beat("#b1", ["#b1a"], 2.1, 4.5);
+
+      // ---------- 2. Nadie te la encendió + primer crecimiento ----------
+      beat("#b2", ["#b2a"], 5.1, 7.4);
+      tl.to("#aNear", { scale: 0.86, autoAlpha: 0.82, duration: 0.5, ease: "power2.out" }, 5.6);
+      tl.to("#aFar", { scale: 0.76, autoAlpha: 0.68, duration: 0.6, ease: "power2.out" }, 5.65);
+      tl.to("#room", { autoAlpha: 0.42, duration: 0.6, ease: "power2.out" }, 5.65);
+
+      // ---------- 3. Crece cuando te eliges (revelado escalonado) ----------
+      beat("#b3", ["#b3a", "#b3b"], 8.1, 11.0);
+      tl.to("#aNear", { scale: 1.0, autoAlpha: 0.9, duration: 0.5, ease: "power2.out" }, 8.7);
+      tl.to("#aFar", { scale: 0.9, autoAlpha: 0.76, duration: 0.6, ease: "power2.out" }, 8.75);
+      tl.to("#aCore", { scale: 1.12, duration: 0.5, ease: "power2.out" }, 8.75);
+      tl.to("#room", { autoAlpha: 0.5, duration: 0.6, ease: "power2.out" }, 8.75);
+
+      tl.to("#aNear", { scale: 1.12, duration: 0.5, ease: "power2.out" }, 9.9);
+      tl.to("#aFar", { scale: 1.02, autoAlpha: 0.84, duration: 0.6, ease: "power2.out" }, 9.95);
+      tl.to("#room", { autoAlpha: 0.56, duration: 0.6, ease: "power2.out" }, 9.95);
+
+      // ---------- 4. Llega otra luz (entra por la derecha, viaja a la izquierda) ----------
+      tl.fromTo("#lampB", { x: 780, y: 55 }, { x: 250, duration: 1.5, ease: "power3.out" }, 11.7);
+      tl.fromTo("#bCore", { autoAlpha: 0, scale: 0.62 }, { autoAlpha: 0.95, scale: 0.78, duration: 0.8, ease: "power2.out" }, 11.9);
+      tl.fromTo("#bNear", { autoAlpha: 0, scale: 0.62 }, { autoAlpha: 0.62, scale: 0.7, duration: 0.9, ease: "power2.out" }, 12.0);
+      tl.fromTo("#bFar", { autoAlpha: 0, scale: 0.62 }, { autoAlpha: 0.5, scale: 0.7, duration: 1.0, ease: "power2.out" }, 12.1);
+      // La luz total de la escena sube: dos lámparas iluminan más que una.
+      tl.to("#room", { autoAlpha: 1, duration: 1.2, ease: "power2.out" }, 12.2);
+      tl.to("#floor", { autoAlpha: 1, duration: 1.2, ease: "power2.out" }, 12.2);
+
+      beat("#b4", ["#b4a", "#b4b"], 13.2, 16.1);
+
+      // ---------- 5. Se va (mismo vector: sigue hacia la izquierda y sale) ----------
+      tl.to("#lampB", { x: -900, duration: 1.9, ease: "power2.in" }, 17.0);
+      tl.to(["#bCore", "#bNear", "#bFar"], { autoAlpha: 0, duration: 1.5, ease: "power2.in" }, 17.2);
+      tl.to("#room", { autoAlpha: 0.56, duration: 1.5, ease: "power2.inOut" }, 17.3);
+      tl.to("#floor", { autoAlpha: 0.5, duration: 1.5, ease: "power2.inOut" }, 17.3);
+      // La lámpara A no se toca: ni escala ni opacidad cambian aquí. Ese es el punto.
+
+      beat("#b5", ["#b5a", "#b5b"], 18.9, 21.5);
+
+      // ---------- 6. Cierre: el último crecimiento es suyo, sin nadie ----------
+      tl.to("#aNear", { scale: 1.34, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 22.3);
+      tl.to("#aFar", { scale: 1.24, autoAlpha: 0.95, duration: 1.0, ease: "power3.out" }, 22.35);
+      tl.to("#aCore", { scale: 1.26, duration: 0.9, ease: "power3.out" }, 22.35);
+      tl.to("#room", { autoAlpha: 0.72, duration: 1.0, ease: "power2.out" }, 22.4);
+      tl.to("#floor", { autoAlpha: 0.72, duration: 1.0, ease: "power2.out" }, 22.4);
+
+      beat("#b6", ["#b6a", "#b6b"], 22.9, 26.1);
+      tl.fromTo("#mark", { y: 26, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 24.4);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
